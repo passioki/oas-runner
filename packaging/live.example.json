@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "serve": {
+    "port": 8788,
+    "bind": "127.0.0.1",
+    "ui": "ui"
+  },
+  "runner": {
+    "port": 8789,
+    "bind": "127.0.0.1"
+  },
+  "paths": {
+    "tasks_dir": "tasks",
+    "runs_dir": "runs",
+    "library_dir": "library"
+  },
+  "ocr": {
+    "model": "models/PP-OCRv6_rec_small.onnx",
+    "det_model": "models/PP-OCRv6_det_small.onnx"
+  },
+  "device": {
+    "adb_path": "adb/adb.exe",
+    "serial": "127.0.0.1:16384",
+    "reconnect_endpoints": ["127.0.0.1:16384", "emulator-5554"]
+  },
+  "scheduler": {
+    "plan": "scheduler.json",
+    "state": "scheduler.state.json",
+    "report": "runs/scheduler-report.json"
+  },
+  "exchange": {
+    "enabled": false,
+    "dir": "exchange",
+    "poll_secs": 3,
+    "notify": {
+      "enabled": false,
+      "runner_url": "http://127.0.0.1:8789",
+      "timeout_ms": 800
+    }
+  },
+  "updates": {
+    "enabled": false,
+    "fetch_timeout_ms": 8000,
+    "feeds": []
+  }
+}

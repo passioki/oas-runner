@@ -7,6 +7,9 @@
 # Phase 1b (current): `oasd` is pinned to an oas-core **git commit** (no tag is
 # cut yet; the commit hash is the source of truth). Bump `rev` deliberately
 # after an oas-core change, rebuild and commit the updated Cargo.lock.
+#
+# 802f58b… = oas-core seq 116: adds `oasd::cli::run_as_with_args`, which the
+# Runner app uses to inject its own default `--ui ui` (see src/main.rs).
 [package]
 name = "oasd-runner"
 version = "0.1.0"
@@ -19,4 +22,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "39d97b82c699497d1f87f0b61af086542c9c110e", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "802f58b92d050bc965492338904002c37ba7d160", features = ["ocr"] }
