@@ -1,14 +1,14 @@
-# oasd-runner — the thin Runner application (Phase 1a of the Runner/Studio split).
+# oasd-runner ??the thin Runner application (Phase 1a of the Runner/Studio split).
 #
 # The whole Runner capability (HTTP surface, embedded scheduler, package
-# install, runner config, …) lives in the `oasd` engine *library*. This package
+# install, runner config, ?? lives in the `oasd` engine *library*. This package
 # only ships the binary, so the Runner can be built from this repository alone.
 #
 # Phase 1b (current): `oasd` is pinned to an oas-core **git commit** (no tag is
 # cut yet; the commit hash is the source of truth). Bump `rev` deliberately
 # after an oas-core change, rebuild and commit the updated Cargo.lock.
 #
-# 802f58b… = oas-core seq 116: adds `oasd::cli::run_as_with_args`, which the
+# 802f58b??= oas-core seq 116: adds `oasd::cli::run_as_with_args`, which the
 # Runner app uses to inject its own default `--ui ui` (see src/main.rs).
 [package]
 name = "oasd-runner"
@@ -22,4 +22,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "802f58b92d050bc965492338904002c37ba7d160", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "78be71d14325859ac3ef710b0659cf8a18f26b83", features = ["ocr"] }
