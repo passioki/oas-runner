@@ -22,9 +22,13 @@ oas-runner/
 
 ## 当前状态
 
-- 2026-11-05：仓库创建（空仓骨架）。Runner 代码仍在 oas-core（`apps/oasd` 的 Runner surface），
-  Phase 1 搬迁前本仓只承载：计划/文档、数据镜像脚本、打包与发布说明。
-- 权威设计：oas-core `docs/RUNNER-STUDIO-SPLIT-PLAN.md`、`docs/ENGINE-DESIGN.md §22.44~§22.54`、
+- 2026-11-05：仓库创建（空仓骨架 + `docs/UPDATES.md`）。
+- 2026-11-05（seq 114，oas-core）：Runner 使用端参数 UI（group/使用开关/留空=不注入）、
+  **更新检测 feeds（本地路径/HTTP(S) URL，系统 curl 下载）**、`make-update-feed.ps1`
+  已在 oas-core 实现并通过 E2E；本仓 `docs/UPDATES.md` 记录使用方式，待 Phase 1 搬迁源码。
+- Runner 代码仍在 oas-core（`apps/oasd` 的 Runner surface），Phase 1 搬迁前本仓只承载：
+  计划/文档、数据镜像脚本、打包与发布说明。
+- 权威设计：oas-core `docs/RUNNER-STUDIO-SPLIT-PLAN.md`、`docs/ENGINE-DESIGN.md §22.44~§22.55`、
   `_verify/dual-app-design-20261105/RUNNER-SPLIT-DESIGN.md`（设计稿在 oas-core 仓外证据目录）。
 - 发布：Runner-only zip 由 oas-core 的 `scripts/package-runner.ps1` 产出（含 `bundled-data/`），
   本仓 Phase 1 起独立构建/发布。
