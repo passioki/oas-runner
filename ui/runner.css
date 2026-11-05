@@ -1,0 +1,1056 @@
+/* OAS Runner（使用端） - 复用 style.css 的基础外观；仅补 Runner 页面所需布局。
+   约束：Web-first、无外部字体/CDN、窄屏单列、路径原样显示（不假设盘符）。 */
+:root {
+  --runner-panel: #1d2027;
+  --runner-border: #2b2f38;
+  --runner-text: #e6e6e6;
+  --runner-muted: #9aa0aa;
+  --runner-accent: #8fb8e8;
+  --runner-ok: #7bd88f;
+  --runner-warn: #e8c46a;
+  --runner-err: #ff8a80;
+}
+
+.runner-body {
+  background: #14161a;
+  color: var(--runner-text);
+}
+
+.runner-header {
+  gap: 5px;
+}
+
+.runner-header .hdr-row {
+  flex-wrap: wrap;
+}
+
+.runner-badges-row {
+  gap: 6px;
+}
+
+.runner-badge {
+  display: inline-block;
+  padding: 0 8px;
+  border: 1px solid var(--runner-border);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: #c9d1db;
+  background: #171a20;
+}
+
+.runner-badge.ok {
+  color: var(--runner-ok);
+  border-color: #2f6b3f;
+  background: #16281b;
+}
+
+.runner-badge.warn {
+  color: var(--runner-warn);
+  border-color: #6b5a2f;
+  background: #2a2416;
+}
+
+.runner-badge.err {
+  color: var(--runner-err);
+  border-color: #6b2f2f;
+  background: #2a1618;
+}
+
+.runner-badge.kind {
+  color: #9ec1ea;
+  border-color: #2f4a6b;
+  background: #161f2a;
+}
+
+#runner-page-status.ok { color: var(--runner-ok); }
+#runner-page-status.err { color: var(--runner-err); }
+
+#runner-nav {
+  flex-wrap: wrap;
+}
+
+main.runner-main {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+}
+
+.runner-main .page-wrap {
+  max-width: 1180px;
+}
+
+.runner-main h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.runner-main h3 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--runner-accent);
+}
+
+.runner-section {
+  margin-bottom: 12px;
+}
+
+.runner-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.runner-grid .card {
+  margin: 0;
+  min-width: 0;
+}
+
+.runner-kv {
+  display: grid;
+  grid-template-columns: minmax(96px, 150px) minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.runner-kv dt {
+  color: var(--runner-muted);
+  font-size: 12px;
+}
+
+.runner-kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: #dfe3e8;
+}
+
+.runner-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--runner-border);
+  border-radius: 8px;
+  background: #171a20;
+}
+
+.runner-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.runner-table th,
+.runner-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid #262b33;
+}
+
+.runner-table th {
+  color: var(--runner-muted);
+  font-weight: 600;
+  white-space: nowrap;
+  background: #1b1f26;
+}
+
+.runner-table td {
+  color: #dfe3e8;
+}
+
+.runner-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.runner-table tbody tr:hover {
+  background: #202833;
+}
+
+.runner-table .runner-error-cell {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runner-note {
+  border-left: 3px solid #2f4a6b;
+  background: #171d26;
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 12px 0 0;
+}
+
+.runner-note code {
+  color: var(--runner-accent);
+}
+
+.runner-raw {
+  margin-bottom: 12px;
+}
+
+.runner-raw summary {
+  cursor: pointer;
+  color: var(--runner-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.runner-pre {
+  margin: 8px 0 0;
+  max-height: 360px;
+}
+
+#runner-tasks-count {
+  white-space: nowrap;
+}
+
+.runner-empty {
+  color: var(--runner-muted);
+  padding: 8px 2px;
+}
+
+/* PR2: 任务运行值表单（WebView / 窄屏友好，不依赖平台）
+   P2: 按 meta.params[].group 分节 + 每参「使用」开关 + bool 三态；对话框加宽。 */
+.runner-config-dialog {
+  width: min(720px, calc(100vw - 24px));
+}
+
+.runner-config-dialog > .muted.small {
+  line-height: 1.5;
+}
+
+#runner-config-status {
+  margin: 4px 0 2px;
+}
+
+#runner-config-status.ok { color: var(--runner-ok); }
+#runner-config-status.err { color: var(--runner-err); }
+
+#runner-config-fields {
+  max-height: 54vh;
+  overflow-y: auto;
+  margin: 8px 0 4px;
+  padding-right: 2px;
+}
+
+.runner-config-field {
+  border-top: 1px solid var(--runner-border);
+  padding: 8px 0;
+}
+
+.runner-config-field:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.runner-config-field label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--runner-text);
+}
+
+.runner-config-required {
+  margin-left: 4px;
+  color: var(--runner-warn);
+  font-size: 11px;
+}
+
+.runner-config-desc {
+  margin-bottom: 5px;
+  color: var(--runner-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.runner-config-hint {
+  margin-top: 4px;
+  color: var(--runner-muted);
+  font-size: 11px;
+}
+
+.runner-config-field input[type="text"],
+.runner-config-field input[type="number"],
+.runner-config-field select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.runner-config-field input[type="checkbox"] {
+  width: auto;
+}
+
+.runner-config-empty {
+  padding: 6px 0;
+  color: var(--runner-muted);
+}
+
+.runner-config-open {
+  white-space: nowrap;
+}
+
+.runner-config-dialog .dialog-actions button {
+  width: auto;
+}
+
+/* P2: 参数页（group 分节 / 使用开关 / bool 三态 / 留空=不注入） */
+.runner-config-summary {
+  margin: 3px 0 4px;
+  color: var(--runner-text);
+  overflow-wrap: anywhere;
+}
+
+.runner-config-group {
+  border: 1px solid var(--runner-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  margin: 6px 0;
+  background: #171a20;
+}
+
+.runner-config-group > summary {
+  cursor: pointer;
+  color: var(--runner-accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 0;
+}
+
+.runner-config-group-count {
+  margin-left: 6px;
+  color: var(--runner-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.runner-config-row {
+  display: grid;
+  grid-template-columns: 64px minmax(120px, 1.2fr) minmax(130px, 1fr) auto;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 7px 0;
+  border-top: 1px solid var(--runner-border);
+}
+
+.runner-config-row:first-of-type {
+  border-top: 0;
+  padding-top: 2px;
+}
+
+.runner-config-use {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--runner-muted);
+  white-space: nowrap;
+}
+
+.runner-config-use input {
+  width: auto;
+  margin: 0;
+}
+
+.runner-config-meta {
+  min-width: 0;
+}
+
+.runner-config-label {
+  color: var(--runner-text);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.runner-config-key {
+  margin-left: 5px;
+  color: var(--runner-muted);
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.runner-config-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.runner-config-control {
+  min-width: 0;
+}
+
+.runner-config-control input[type="text"],
+.runner-config-control input[type="number"],
+.runner-config-control select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.runner-config-control input[type="checkbox"] {
+  width: auto;
+}
+
+.runner-config-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.runner-config-reset {
+  width: auto;
+  padding: 2px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.runner-config-row-hint {
+  grid-column: 2 / -1;
+  margin-top: -2px;
+  color: var(--runner-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.runner-config-row.disabled .runner-config-control {
+  opacity: 0.55;
+}
+
+.runner-config-row.disabled .runner-config-label {
+  color: var(--runner-muted);
+}
+
+.runner-config-row.blocked .runner-config-row-hint {
+  color: var(--runner-err);
+}
+
+.runner-config-row-err {
+  grid-column: 2 / -1;
+  margin-top: 2px;
+  color: var(--runner-err);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.runner-config-row-err:empty {
+  display: none;
+}
+
+/* P2: 更新 feed — 来源徽标 + 需下载提示 */
+.runner-update-source {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.runner-update-download {
+  color: var(--runner-warn);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* PR5: 安装包页（安装卡 / 已安装列表 / 未纳管裸目录） */
+#page-packages .card.runner-section {
+  margin-bottom: 12px;
+}
+
+#page-packages .opt {
+  display: block;
+  margin: 6px 0;
+}
+
+#page-packages #runner-install-path {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#runner-install-status.ok { color: var(--runner-ok); }
+#runner-install-status.err { color: var(--runner-err); }
+
+#runner-install-result .runner-kv {
+  margin-top: 6px;
+}
+
+#runner-install-warnings {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--runner-warn);
+}
+
+#runner-install-warnings:empty,
+#runner-install-error:empty {
+  display: none;
+}
+
+#runner-install-error {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+#runner-packages-status.ok { color: var(--runner-ok); }
+#runner-packages-status.err { color: var(--runner-err); }
+
+#runner-packages-list {
+  margin-bottom: 12px;
+}
+
+.runner-package-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.runner-package-actions button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.runner-unmanaged-row {
+  padding: 4px 2px;
+  border-bottom: 1px solid #262b33;
+  overflow-wrap: anywhere;
+}
+
+.runner-unmanaged-row:last-child {
+  border-bottom: 0;
+}
+
+/* P0-1a: Studio 发布通知（导航「安装包」徽标 + 安装包页「新发布」列表） */
+.runner-badge[hidden] {
+  display: none;
+}
+
+.runner-nav-label {
+  display: inline;
+}
+
+#runner-nav .runner-badge.runner-nav-badge,
+#runner-updates-badge {
+  margin-left: 5px;
+  padding: 0 5px;
+  min-width: 16px;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #14161a;
+  background: var(--runner-accent);
+  border-color: var(--runner-accent);
+}
+
+#runner-updates-summary {
+  overflow-wrap: anywhere;
+}
+
+#runner-updates-status {
+  margin: 4px 0 6px;
+  overflow-wrap: anywhere;
+}
+
+#runner-updates-status.ok { color: var(--runner-ok); }
+#runner-updates-status.warn { color: var(--runner-warn); }
+#runner-updates-status.err { color: var(--runner-err); }
+
+#runner-updates-list {
+  margin-bottom: 8px;
+}
+
+.runner-update-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.runner-update-actions button {
+  width: auto;
+  white-space: nowrap;
+}
+
+.runner-update-version {
+  white-space: nowrap;
+}
+
+.runner-update-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--runner-warn);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+/* PR6: 调度控制 / 临时运行 / scheduler.json 编辑（队列与调度页） */
+#runner-sched-control .runner-sched-actions,
+#runner-run-card .row,
+#runner-sched-json-card .row {
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+#runner-sched-control h3 .runner-badge {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+#runner-sched-meta,
+#runner-run-status,
+#runner-sched-status,
+#runner-sched-json-status {
+  overflow-wrap: anywhere;
+}
+
+#runner-sched-meta .runner-kv {
+  margin-top: 6px;
+}
+
+#runner-sched-status.ok,
+#runner-sched-json-status.ok,
+#runner-run-status.ok {
+  color: var(--runner-ok);
+}
+
+#runner-sched-status.err,
+#runner-sched-json-status.err,
+#runner-run-status.err {
+  color: var(--runner-err);
+}
+
+#runner-sched-error,
+#runner-run-error,
+#runner-sched-json-error {
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 6px 0 0;
+  color: var(--runner-err);
+  background: #1d2027;
+}
+
+#runner-sched-error:empty,
+#runner-run-error:empty,
+#runner-sched-json-error:empty {
+  display: none;
+}
+
+#page-queue .opt {
+  display: block;
+  margin: 6px 0;
+}
+
+#runner-run-task {
+  max-width: 100%;
+}
+
+#runner-run-params {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 64px;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+#runner-run-log {
+  min-height: 48px;
+  max-height: 220px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: #171a20;
+  border: 1px solid var(--runner-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+#runner-run-log:empty {
+  display: none;
+}
+
+.runner-sched-json-card summary {
+  cursor: pointer;
+  color: var(--runner-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#runner-sched-json {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 220px;
+  max-height: 52vh;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+/* PR7: 旧 Studio 调度页整体迁移（条目/队列卡片、状态卡、运行记录、对话框） */
+#page-queue .page-head {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#page-queue .page-head h3 {
+  margin: 0;
+  color: var(--runner-text);
+  font-size: 14px;
+}
+
+.runner-sched-page {
+  margin-top: 4px;
+}
+
+.sched-status-card {
+  margin-bottom: 12px;
+}
+
+.sched-status-card > .row {
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sched-status-card #page-sched-summary,
+.sched-status-card #page-sched-config-status,
+.sched-status-card #page-sched-runs-summary {
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+#page-sched-running {
+  font-size: 12px;
+}
+
+#page-sched-entries,
+#page-sched-queues,
+#page-sched-runs-list {
+  margin-bottom: 14px;
+}
+
+#page-sched-entries > .task-card,
+#page-sched-queues > .task-card {
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+#page-sched-entries > .task-card > .task-meta,
+#page-sched-queues > .task-card > .task-meta {
+  flex: 1 1 320px;
+}
+
+#page-sched-entries > .task-card > button,
+#page-sched-queues > .task-card > button {
+  width: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
+#page-sched-entries .row,
+#page-sched-queues .row {
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+#page-sched-entries .task-sub,
+#page-sched-queues .task-sub,
+#sched-entries .sched-entry {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#page-sched-entries .opt.small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 4px 0 0;
+  white-space: nowrap;
+}
+
+.sched-entry {
+  border: 1px solid var(--runner-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+
+.sched-entry .row {
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.reset-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.reset-task-row input[type="checkbox"] {
+  width: auto;
+  flex: none;
+  margin: 0;
+}
+
+#reset-task-list {
+  max-height: 42vh;
+  overflow-y: auto;
+  border: 1px solid var(--runner-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin: 6px 0;
+}
+
+#reset-result.ok {
+  color: var(--runner-ok);
+}
+
+#reset-result.err {
+  color: var(--runner-err);
+}
+
+#page-sched-runs-list .runner-table tbody tr {
+  cursor: pointer;
+}
+
+#page-sched-runs-list .runner-table tbody tr:focus {
+  outline: 1px solid var(--runner-accent);
+  outline-offset: -1px;
+}
+
+#page-sched-runs-status,
+#reset-result {
+  overflow-wrap: anywhere;
+}
+
+#page-sched-json-status.ok {
+  color: var(--runner-ok);
+}
+
+#page-sched-json-status.err {
+  color: var(--runner-err);
+}
+
+#page-sched-advanced {
+  margin-top: 4px;
+}
+
+#page-sched-json {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 220px;
+  max-height: 52vh;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
+  font-size: 12px;
+}
+
+#page-sched-json-error {
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--runner-err);
+}
+
+#page-sched-json-error:empty {
+  display: none;
+}
+
+.sched-entry-dialog,
+.sched-queue-dialog,
+.sched-run-dialog {
+  width: min(680px, calc(100vw - 24px));
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.sched-entry-dialog .builder-code,
+.sched-queue-dialog .builder-code {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sched-entry-dialog .opt,
+.sched-queue-dialog .opt {
+  display: block;
+  margin: 6px 0;
+}
+
+.sched-entry-dialog .lib-toolbar,
+.sched-queue-dialog .lib-toolbar {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sched-entry-dialog .lib-toolbar .opt,
+.sched-queue-dialog .lib-toolbar .opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+#sched-queue-members {
+  max-height: 30vh;
+  overflow-y: auto;
+  border: 1px solid var(--runner-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+#sched-queue-task-pool {
+  max-height: 26vh;
+  overflow-y: auto;
+}
+
+#page-sched-runs-dialog {
+  width: min(760px, calc(100vw - 24px));
+}
+
+#page-sched-runs-detail-body {
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+#page-sched-runs-detail-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+#page-sched-runs-detail-body td {
+  border-bottom: 1px solid #262b33;
+  padding: 4px 6px;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+#page-sched-runs-detail-body td:first-child {
+  color: var(--runner-muted);
+  white-space: nowrap;
+}
+
+#page-sched-runs-detail-body pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 已安装任务行：配置 / 调度设置 / 运行记录 */
+.runner-task-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.runner-task-actions button {
+  width: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .runner-header {
+    padding: 8px 10px;
+  }
+
+  .runner-header .hdr-row {
+    gap: 6px;
+  }
+
+  #runner-nav {
+    gap: 4px;
+    padding: 6px 10px;
+  }
+
+  #runner-nav .app-nav-btn {
+    padding: 4px 8px;
+  }
+
+  /* Decorative (not data) on very narrow screens; the top refresh stays. */
+  #runner-last-refresh,
+  #runner-nav > .spacer,
+  #runner-nav > .muted {
+    display: none;
+  }
+
+  .runner-main .page-wrap {
+    padding: 10px;
+  }
+
+  .runner-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .runner-kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .runner-kv dt {
+    margin-top: 8px;
+  }
+
+  .runner-kv dt:first-child {
+    margin-top: 0;
+  }
+
+  .runner-table th,
+  .runner-table td {
+    padding: 5px 6px;
+  }
+
+  .runner-config-dialog {
+    width: calc(100vw - 16px);
+    padding: 12px;
+  }
+
+  #runner-config-fields {
+    max-height: 46vh;
+  }
+
+  /* P0-1a: 新发布区块在窄屏上换行排布，徽标不撑破 nav。 */
+  #runner-updates-section .page-head {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  #runner-updates-section .page-head .spacer {
+    display: none;
+  }
+
+  #runner-nav .runner-badge.runner-nav-badge {
+    margin-left: 3px;
+    padding: 0 4px;
+  }
+
+  .runner-update-actions button {
+    padding: 3px 8px;
+  }
+
+  /* P2: 参数页在窄屏上单列（使用开关 / 元信息 / 控件 / 提示依次排列）。 */
+  .runner-config-row {
+    grid-template-columns: 1fr;
+    gap: 3px;
+  }
+
+  .runner-config-row-hint,
+  .runner-config-row-err {
+    grid-column: 1;
+  }
+
+  .runner-config-row-actions {
+    justify-content: flex-start;
+  }
+}

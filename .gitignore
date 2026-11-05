@@ -1,6 +1,7 @@
 # build outputs / runtime state (never committed)
 /dist/
 /target/
+/apps/runner/target/
 /packages/
 /logs/
 /runs/

@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OAS Runner（使用端）</title>
+<link rel="stylesheet" href="/style.css" />
+<link rel="stylesheet" href="/runner.css" />
+</head>
+<body class="runner-body">
+  <header class="app-header runner-header">
+    <div class="hdr-row">
+      <strong>OAS Runner（使用端）</strong>
+      <span id="runner-page-status" class="muted small" role="status" aria-live="polite">连接中…</span>
+      <span class="spacer"></span>
+      <button id="runner-refresh" type="button" title="重新读取当前页面的只读数据">刷新</button>
+    </div>
+    <div class="hdr-row runner-badges-row">
+      <span id="runner-conn-badge" class="runner-badge kind">API 连接中…</span>
+      <span id="runner-version-badge" class="runner-badge kind">版本 —</span>
+      <span id="runner-port-badge" class="runner-badge kind">端口 —</span>
+      <span id="runner-lock-badge" class="runner-badge kind">调度锁 —</span>
+      <span class="spacer"></span>
+      <span id="runner-last-refresh" class="muted small">上次刷新 —</span>
+    </div>
+  </header>
+
+  <nav class="app-nav" id="runner-nav" aria-label="Runner 导航">
+    <button class="app-nav-btn active" data-page="overview" type="button">概览</button>
+    <button class="app-nav-btn" data-page="tasks" type="button">已安装任务</button>
+    <button class="app-nav-btn" data-page="packages" type="button"><span class="runner-nav-label">安装包</span><span id="runner-updates-badge" class="runner-badge runner-nav-badge" hidden>0</span></button>
+    <button class="app-nav-btn" data-page="queue" type="button">队列与调度</button>
+    <button class="app-nav-btn" data-page="runs" type="button">运行记录</button>
+    <button class="app-nav-btn" data-page="settings" type="button">设置</button>
+    <span class="spacer"></span>
+    <span class="muted small">使用端 · 本机配置</span>
+  </nav>
+
+  <main class="runner-main">
+    <div id="page-overview" class="app-page active">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>概览</h2>
+          <span class="muted small">运行面健康、路径与最近调度运行</span>
+          <span class="spacer"></span>
+          <button id="runner-health-refresh" type="button">刷新</button>
+        </div>
+        <section class="card runner-section">
+          <h3>运行面</h3>
+          <div id="overview-health" class="muted">（未加载）</div>
+        </section>
+        <section class="card runner-section">
+          <h3>调度</h3>
+          <div id="overview-scheduler" class="muted">（未加载）</div>
+          <div class="row">
+            <button id="overview-goto-queue" type="button">去「队列与调度」页</button>
+            <span class="muted small">启动/停止调度、临时运行与 scheduler.json 编辑都在那里。</span>
+          </div>
+        </section>
+        <section class="card runner-section">
+          <h3>最近运行</h3>
+          <div id="overview-recent-runs" class="muted">（未加载）</div>
+          <div id="overview-recent-status" class="muted small">—</div>
+        </section>
+        <p class="runner-note muted small">
+          调度启停、临时运行与 scheduler.json 编辑在「队列与调度」页；运行值在「已安装任务 → 配置」里填写。
+          路径按运行面返回原样显示，不做平台转换。
+        </p>
+      </div>
+    </div>
+
+    <div id="page-tasks" class="app-page">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>已安装任务</h2>
+          <span id="runner-tasks-count" class="muted small">—</span>
+          <span class="spacer"></span>
+          <button id="runner-tasks-refresh" type="button">刷新</button>
+        </div>
+        <div id="runner-tasks-status" class="muted small">—</div>
+        <div id="runner-tasks-list" class="muted">（未加载）</div>
+        <p class="runner-note muted small">
+          任务来自 Runner 任务目录；已安装包显示版本徽标，裸目录显示「未纳管」。
+          每行「配置」编辑本机运行值（<code>config/values.json</code>）；发布包里的 meta.params 只定义 schema。
+          「调度设置…」直接编辑该任务的调度条目，「运行记录」跳到本页下方并按该任务筛选。
+          安装/卸载/回滚请到「安装包」页。
+        </p>
+      </div>
+    </div>
+
+    <div id="page-packages" class="app-page">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>安装包</h2>
+          <span id="runner-packages-summary" class="muted small">—</span>
+          <span class="spacer"></span>
+          <button id="runner-packages-refresh" type="button">刷新</button>
+        </div>
+        <div id="runner-packages-status" class="muted small" role="status" aria-live="polite">—</div>
+
+        <!-- P0-1a：Studio 发布通知（exchange 交换区 → Runner 新发布列表） -->
+        <section class="card runner-section" id="runner-updates-section">
+          <div class="row page-head">
+            <h3>新发布（来自 Studio）</h3>
+            <span id="runner-updates-summary" class="muted small">—</span>
+            <span class="spacer"></span>
+            <button id="runner-updates-refresh" type="button">刷新</button>
+          </div>
+          <div id="runner-updates-status" class="muted small" role="status" aria-live="polite">—</div>
+          <div id="runner-updates-list" class="muted">（未加载）</div>
+          <p class="runner-note muted small">
+            发布通知来自 Studio 的 exchange 交换区（<code>config/live.json</code> → <code>exchange.dir</code>）
+            或配置的发布源（feed）：Studio 发布任务包时把包与发布索引写进交换区，Runner 轮询后在此列出。
+            点「安装」会请求后端按来源下载/安装（<code>POST /runner/updates/install</code>，自动标记已安装）；
+            来源不可下载或需要手动接管时，仍可用下方「本机 .oaspkg 路径」手动安装。
+            未启用 exchange 时这里不会出现本机 Studio 的新发布。
+          </p>
+        </section>
+
+        <section class="card runner-section">
+          <h3>安装任务包</h3>
+          <p class="muted small">
+            安装 Studio 发布的 <code>.oaspkg</code>（本机路径）。安装会校验 sha256、
+            复检任务，并在覆盖前备份到 <code>packages/backup/</code>。
+          </p>
+          <label class="opt">本机 .oaspkg 路径
+            <input id="runner-install-path" type="text" autocomplete="off" spellcheck="false"
+              placeholder="如 &lt;Runner目录&gt;\packages\task-v1.oaspkg（必须是本机绝对路径）" />
+          </label>
+          <label class="opt"><input id="runner-install-force" type="checkbox" />
+            覆盖本机已修改的任务（force；dirty_task 时使用）</label>
+          <div class="row">
+            <button id="runner-install-submit" type="button">安装</button>
+            <span id="runner-install-status" class="muted small" role="status" aria-live="polite">—</span>
+          </div>
+          <div id="runner-install-result" class="muted small">—</div>
+          <pre id="runner-install-warnings" class="muted small"></pre>
+          <pre id="runner-install-error" class="muted small dialog-error"></pre>
+        </section>
+
+        <div class="row page-head">
+          <h3>已安装包</h3>
+          <span id="runner-packages-count" class="muted small">—</span>
+        </div>
+        <div id="runner-packages-list" class="muted">（未加载）</div>
+
+        <div class="row page-head">
+          <h3>未纳管（裸目录）</h3>
+          <span id="runner-packages-unmanaged-status" class="muted small">—</span>
+        </div>
+        <div id="runner-packages-unmanaged" class="muted">（未加载）</div>
+
+        <p class="runner-note muted small">
+          「回滚」恢复该任务最近一次安装/卸载前的备份（Phase 1）；「卸载」会先备份任务目录。
+          裸目录指直接放在 <code>tasks/</code> 下、未经安装包管理的任务，只读展示。
+        </p>
+      </div>
+    </div>
+
+    <div id="page-queue" class="app-page">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>队列与调度</h2>
+          <span class="muted small">完整调度编辑器（条目/队列/运行记录/重置记忆）· 条目顺序 = 执行顺序</span>
+          <span class="spacer"></span>
+          <button id="runner-queue-refresh" type="button">刷新</button>
+        </div>
+        <div id="runner-queue-status" class="muted small" role="status" aria-live="polite">—</div>
+
+        <section class="card runner-section" id="runner-sched-control">
+          <h3>调度控制 <span id="runner-sched-badge" class="runner-badge kind">—</span></h3>
+          <div id="runner-sched-meta" class="muted small">—</div>
+          <div class="row runner-sched-actions">
+            <button id="runner-sched-start" type="button" title="在本 Runner 进程内启动调度线程">启动调度</button>
+            <button id="runner-sched-stop" type="button" title="请求停止调度；当前任务跑完后才退出">停止调度</button>
+            <button id="runner-sched-refresh" type="button">刷新</button>
+            <span id="runner-sched-status" class="muted small" role="status" aria-live="polite">—</span>
+          </div>
+          <pre id="runner-sched-error" class="muted small dialog-error"></pre>
+          <p class="runner-note muted small">
+            调度在本 Runner 进程内以线程运行，与 <code>oasd scheduler</code> 共用同一把
+            <code>&lt;state&gt;.lock</code>，同一时间只能有一个在跑。停止只会在当前任务跑完后生效，
+            不会中断正在执行的任务；锁被其他进程占用时启动会返回 409。
+          </p>
+        </section>
+
+        <section class="card runner-section" id="runner-run-card">
+          <h3>临时运行</h3>
+          <p class="muted small">
+            立即运行一次任务，不写入调度条目。参数留空或 <code>{}</code> 时使用 Runner
+            已保存的运行值（「已安装任务 → 配置」）；这里填的值覆盖保存值。
+          </p>
+          <label class="opt">任务
+            <select id="runner-run-task"></select>
+          </label>
+          <label class="opt">参数 JSON（可选）
+            <textarea id="runner-run-params" class="runner-pre runner-run-params" rows="3"
+              spellcheck="false" placeholder='{"触发文字":"突破"}'>{}</textarea>
+          </label>
+          <div class="row">
+            <button id="runner-run-submit" type="button">立即运行</button>
+            <span id="runner-run-status" class="muted small" role="status" aria-live="polite">—</span>
+          </div>
+          <pre id="runner-run-error" class="muted small dialog-error"></pre>
+          <pre id="runner-run-log" class="runner-pre runner-run-log"></pre>
+        </section>
+
+        <!-- 旧 Studio 工作台「调度」面板：Runner 中作为只读总览 -->
+        <section class="card runner-section" id="panel-schedule">
+          <h3>调度总览（v4）</h3>
+          <div class="row lib-toolbar">
+            <button id="btn-sched-refresh" type="button">刷新状态</button>
+            <button id="btn-sched-reset" type="button">重置记忆…</button>
+            <button id="btn-sched-open-page" type="button">查看条目与队列 ↓</button>
+          </div>
+          <div id="sched-summary" class="muted small">—</div>
+          <div id="sched-entries" class="asset-list muted">（未加载调度状态）</div>
+          <p class="muted small">
+            本面板只读；条目/队列的启用、排序与编辑在下方「调度配置」。
+            状态来自 <code>scheduler.json</code>（v4）；启动/停止用上方「调度控制」。
+          </p>
+        </section>
+
+        <!-- 旧 Studio #page-schedule：完整调度编辑器 -->
+        <div id="page-schedule" class="runner-sched-page">
+          <div class="row page-head">
+            <h3>调度配置</h3>
+            <span class="muted small">scheduler.json v4 · periodic/temp · 队列轮次 · 条目顺序 = 执行顺序</span>
+            <span class="spacer"></span>
+            <button id="page-sched-refresh" type="button">刷新</button>
+            <button id="page-sched-save" type="button">保存配置</button>
+            <button id="page-sched-reload" type="button">重新加载</button>
+            <button id="page-sched-reset" type="button">重置记忆…</button>
+          </div>
+          <div class="card sched-status-card">
+            <div class="row">
+              <strong id="page-sched-mode">模式：—</strong>
+              <span id="page-sched-passes" class="muted small">passes=—</span>
+              <span id="page-sched-next-wake" class="muted small">下次唤醒=—</span>
+              <span id="page-sched-running" class="runner-badge">锁=—</span>
+              <span id="page-sched-quota" class="muted small">quota=—</span>
+            </div>
+            <div id="page-sched-summary" class="muted small">—</div>
+            <div id="page-sched-config-status" class="muted small">配置：—</div>
+            <div id="page-sched-runs-summary" class="muted small">运行记录：—</div>
+          </div>
+          <div class="row page-head">
+            <h3>调度条目</h3>
+            <span class="muted small">顺序即执行顺序；调度器运行中保存会被 409 拒绝</span>
+            <span class="spacer"></span>
+            <button id="page-sched-add-entry" type="button">+ 添加条目…</button>
+          </div>
+          <div id="page-sched-entries" class="task-library muted">（未加载）</div>
+          <div class="row page-head">
+            <h3>队列（一轮 = 按顺序走完成员）</h3>
+            <span class="muted small">total_rounds=0 表示无限轮；一个队列最多一个触发条目</span>
+            <span class="spacer"></span>
+            <button id="page-sched-add-queue" type="button">+ 新建队列…</button>
+          </div>
+          <div id="page-sched-queues" class="task-library muted">（未加载）</div>
+          <div class="row page-head">
+            <h3>运行记录</h3>
+            <span class="muted small">调度器每次运行一条（新→旧）；点行查看完整字段与错误全文</span>
+            <span class="spacer"></span>
+            <button id="page-sched-runs-refresh" type="button">刷新运行记录</button>
+          </div>
+          <div class="row lib-toolbar">
+            <label class="opt">任务
+              <select id="page-sched-runs-task">
+                <option value="">全部任务</option>
+              </select>
+            </label>
+            <label class="opt">结果
+              <select id="page-sched-runs-outcome">
+                <option value="">全部结果</option>
+                <optgroup label="class 词（成功/失败分类）">
+                  <option value="success">success（成功）</option>
+                  <option value="resource">resource（资源不足）</option>
+                  <option value="blocked">blocked（被阻断）</option>
+                  <option value="retryable">retryable（可重试）</option>
+                  <option value="fatal">fatal（致命）</option>
+                </optgroup>
+                <optgroup label="落盘 outcome（P4A: Done/Failed/Exhausted/error）">
+                  <option value="Done">Done（完成）</option>
+                  <option value="Failed">Failed（失败）</option>
+                  <option value="Exhausted">Exhausted（耗尽）</option>
+                  <option value="error">error（错误）</option>
+                </optgroup>
+              </select>
+            </label>
+            <label class="opt">条数
+              <select id="page-sched-runs-limit">
+                <option value="100">100</option>
+                <option value="200" selected>200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+              </select>
+            </label>
+            <button id="page-sched-runs-clear" type="button">清除筛选</button>
+            <span id="page-sched-runs-status" class="muted small">—</span>
+          </div>
+          <div id="page-sched-runs-list" class="task-library muted">（未加载）</div>
+          <details id="page-sched-advanced" class="card runner-section runner-sched-json-card">
+            <summary>高级 JSON（完整 scheduler.json）</summary>
+            <p class="muted small">
+              直接编辑完整配置；保存前先本地 JSON.parse 校验，服务端仍会做 schema 校验。
+              调度器运行中保存会返回 409。保存前会先 GET 最新配置并与载入快照比较，防止覆盖外部修改。
+            </p>
+            <textarea id="page-sched-json" class="runner-pre runner-json" spellcheck="false"></textarea>
+            <div class="row lib-toolbar">
+              <button id="page-sched-json-save" type="button">保存 JSON</button>
+              <button id="page-sched-json-reload" type="button">从磁盘重新载入</button>
+              <span id="page-sched-json-status" class="muted small">—</span>
+            </div>
+            <pre id="page-sched-json-error" class="muted small dialog-error"></pre>
+          </details>
+        </div>
+
+        <p class="runner-note muted small">
+          条目顺序与队列成员以 scheduler.json 为准；运行值请在「已安装任务 → 配置」里保存。
+          调度运行中保存配置会返回 409，请先点上方「停止调度」。
+        </p>
+      </div>
+    </div>
+
+    <div id="page-runs" class="app-page">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>运行记录</h2>
+          <span class="muted small">最近 100 条（新→旧）</span>
+          <span class="spacer"></span>
+          <button id="runner-runs-refresh" type="button">刷新</button>
+        </div>
+        <div id="runner-runs-status" class="muted small">—</div>
+        <div id="runner-runs-list" class="muted">（未加载）</div>
+      </div>
+    </div>
+
+    <div id="page-settings" class="app-page">
+      <div class="page-wrap">
+        <div class="row page-head">
+          <h2>设置</h2>
+          <span class="muted small">只读快照</span>
+          <span class="spacer"></span>
+          <button id="runner-settings-refresh" type="button">刷新</button>
+        </div>
+        <div id="runner-settings-status" class="muted small">—</div>
+        <div class="runner-grid">
+          <section class="card">
+            <h3>设备</h3>
+            <div id="settings-device" class="muted">（未加载）</div>
+          </section>
+          <section class="card">
+            <h3>路径</h3>
+            <div id="settings-paths" class="muted">（未加载）</div>
+          </section>
+          <section class="card">
+            <h3>Studio / serve</h3>
+            <div id="settings-serve" class="muted">（未加载）</div>
+          </section>
+          <section class="card">
+            <h3>Runner</h3>
+            <div id="settings-runner" class="muted">（未加载）</div>
+          </section>
+          <section class="card">
+            <h3>调度配置文件</h3>
+            <div id="settings-scheduler" class="muted">（未加载）</div>
+          </section>
+          <section class="card">
+            <h3>实例状态</h3>
+            <div id="settings-instance" class="muted">（未加载）</div>
+          </section>
+        </div>
+        <details class="card runner-raw">
+          <summary>原始配置（只读）</summary>
+          <pre id="settings-config-json" class="runner-pre">（未加载）</pre>
+        </details>
+        <p class="runner-note muted small">
+          修改配置请编辑 <code>config/live.json</code> 后重启 Runner；编辑端不随使用端分发。
+          本页不写入任何配置。
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- PR7：旧 Studio 调度页整体迁移（entry/queue/reset/run-detail 四个对话框） -->
+  <dialog id="reset-memory-dialog" class="task-dialog">
+    <h3>重置使用端运行记忆</h3>
+    <p class="muted small">
+      清空所选任务的调度器条目状态 + 任务 <code>state/</code>（checkpoint/坐标计数）。
+      正在运行的调度器需要先停止。
+    </p>
+    <div class="row lib-toolbar">
+      <button id="btn-reset-all" type="button">全选</button>
+      <button id="btn-reset-invert" type="button">反选</button>
+      <button id="btn-reset-none" type="button">全不选</button>
+    </div>
+    <div id="reset-task-list" class="asset-list"></div>
+    <label class="opt"><input id="reset-include-checkpoint" type="checkbox" checked />
+      同时清除 checkpoint/计数（任务 state/）</label>
+    <div id="reset-result" class="muted small" role="status" aria-live="polite">—</div>
+    <pre id="reset-error" class="muted small dialog-error"></pre>
+    <div class="row dialog-actions">
+      <button id="btn-reset-cancel" type="button">取消</button>
+      <button id="btn-reset-submit" type="button">确认重置</button>
+    </div>
+  </dialog>
+
+  <dialog id="sched-entry-dialog" class="task-dialog sched-entry-dialog">
+    <h3 id="sched-entry-title">调度条目</h3>
+    <div id="sched-entry-mode-hint" class="muted small">—</div>
+    <label class="opt">类型
+      <select id="sched-entry-kind">
+        <option value="task">task（单任务）</option>
+        <option value="queue">queue（队列触发，一轮 = 走完成员一遍）</option>
+      </select>
+    </label>
+    <label class="opt">目标（task=任务名 / queue=queue_id）
+      <select id="sched-entry-target"></select>
+    </label>
+    <div id="sched-entry-id" class="muted small">entry_id：—</div>
+    <label class="opt"><input id="sched-entry-enabled" type="checkbox" checked /> 启用（enabled）</label>
+    <label class="opt">生命周期
+      <select id="sched-entry-lifecycle">
+        <option value="periodic">periodic（按窗口/quota/冷却触发）</option>
+        <option value="temp">temp（每 pass 一次；无窗口、无 quota）</option>
+      </select>
+    </label>
+    <div id="sched-entry-temp-hint" class="muted small">—</div>
+    <label class="opt">时间窗口（简化文本；留空=全天）
+      <input id="sched-entry-windows" autocomplete="off"
+        placeholder="如 08:00-12:00, 18:00-23:00；可选周几前缀 [1,3]08:00-12:00" />
+    </label>
+    <details class="opt">
+      <summary>高级：windows JSON（非空时优先于上面的简化文本）</summary>
+      <textarea id="sched-entry-windows-json" class="builder-code" spellcheck="false"
+        placeholder='[{"days":[],"start":"08:00","end":"12:00"}]'></textarea>
+    </details>
+    <div class="row lib-toolbar">
+      <label class="opt">quota
+        <select id="sched-entry-quota-per">
+          <option value="">无配额（每 pass 可跑）</option>
+          <option value="day">按天 day</option>
+          <option value="week">按周 week</option>
+        </select>
+      </label>
+      <label class="opt">次数
+        <input id="sched-entry-quota-times" type="number" min="1" max="1000" value="1" />
+      </label>
+    </div>
+    <div class="row lib-toolbar">
+      <label class="opt">retry（额外尝试次数）
+        <input id="sched-entry-retry" type="number" min="0" max="10" value="1" />
+      </label>
+      <label class="opt">cooldown_s
+        <input id="sched-entry-cooldown" type="number" min="0" max="604800" value="300" />
+      </label>
+    </div>
+    <label class="opt">params（JSON 对象，可空；队列条目的 params 对全部成员生效）
+      <textarea id="sched-entry-params" rows="3" class="builder-code" spellcheck="false"
+        placeholder='{"max_battles":3}'></textarea>
+    </label>
+    <pre id="sched-entry-error" class="muted small dialog-error"></pre>
+    <div class="row dialog-actions">
+      <button id="sched-entry-cancel" type="button">取消</button>
+      <button id="sched-entry-save" type="button">保存</button>
+    </div>
+  </dialog>
+
+  <dialog id="sched-queue-dialog" class="task-dialog sched-queue-dialog">
+    <h3 id="sched-queue-title">队列</h3>
+    <label class="opt">queue_id（唯一；不能含路径字符）
+      <input id="sched-queue-id" autocomplete="off" placeholder="如：daily" />
+    </label>
+    <label class="opt">名称（可空，默认=queue_id）
+      <input id="sched-queue-name" autocomplete="off" placeholder="如：日常队列" />
+    </label>
+    <div class="row lib-toolbar">
+      <strong class="small">成员（按顺序串行执行）</strong>
+      <span class="spacer"></span>
+      <button id="sched-queue-member-add" type="button">添加勾选任务</button>
+    </div>
+    <div id="sched-queue-members" class="asset-list muted">（还没有成员）</div>
+    <details class="opt">
+      <summary>从任务库勾选成员</summary>
+      <div id="sched-queue-task-pool" class="asset-list"></div>
+    </details>
+    <div class="row lib-toolbar">
+      <label class="opt">total_rounds（0=无限）
+        <input id="sched-queue-total-rounds" type="number" min="0" max="1000000" value="0" />
+      </label>
+      <label class="opt">on_failure
+        <select id="sched-queue-on-failure">
+          <option value="continue">continue（记录失败继续）</option>
+          <option value="fail_fast">fail_fast（本轮中止，仍计 1 轮）</option>
+        </select>
+      </label>
+      <label class="opt">between_ms（成员之间暂停）
+        <input id="sched-queue-between-ms" type="number" min="0" max="600000" value="500" />
+      </label>
+    </div>
+    <div id="sched-queue-rounds-hint" class="muted small">total_rounds=0：无限轮，直到手动停止/重置。</div>
+    <div id="sched-queue-lock-hint" class="muted small">—</div>
+    <pre id="sched-queue-error" class="muted small dialog-error"></pre>
+    <div class="row dialog-actions">
+      <button id="sched-queue-cancel" type="button">取消</button>
+      <button id="sched-queue-save" type="button">保存队列</button>
+    </div>
+  </dialog>
+
+  <dialog id="page-sched-runs-dialog" class="task-dialog sched-run-dialog">
+    <h3 id="page-sched-runs-detail-title">运行详情</h3>
+    <div id="page-sched-runs-detail-body" class="run-detail muted small">（未加载）</div>
+    <pre id="page-sched-runs-detail-error" class="muted small dialog-error"></pre>
+    <div class="row dialog-actions">
+      <button id="page-sched-runs-detail-refresh" type="button">重新读取</button>
+      <span class="spacer"></span>
+      <button id="page-sched-runs-detail-close" type="button">关闭</button>
+    </div>
+  </dialog>
+
+  <!-- PR2：已安装任务的运行值（Runner 本机 config/values.json）；P2 起按 group 分节 -->
+  <dialog id="runner-config-dialog" class="task-dialog runner-config-dialog">
+    <h3 id="runner-config-title">任务配置</h3>
+    <p class="muted small">
+      运行值保存在 Runner 本机（config/values.json）；单任务运行时使用这里的值；
+      被其他任务作为子任务调用时使用调用方的配置（PR4 生效）。<br />
+      参数按 <code>meta.params[].group</code> 分节；取消「使用」或值留空 = 不注入（回退默认值）。
+      保存只影响下一次运行，正在跑的任务使用启动时的值。
+    </p>
+    <div id="runner-config-summary" class="runner-config-summary muted small">—</div>
+    <div id="runner-config-status" class="muted small" role="status" aria-live="polite">—</div>
+    <form id="runner-config-form" autocomplete="off" novalidate>
+      <div id="runner-config-fields" class="muted">（未加载）</div>
+      <pre id="runner-config-error" class="muted small dialog-error"></pre>
+      <div class="row dialog-actions">
+        <button id="runner-config-save" type="button">保存</button>
+        <span class="spacer"></span>
+        <button id="runner-config-close" type="button">关闭</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/runner.js"></script>
+</body>
+</html>
