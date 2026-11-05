@@ -1,0 +1,23 @@
+# build outputs / runtime state (never committed)
+/dist/
+/target/
+/packages/
+/logs/
+/runs/
+/config/values.json
+/config/notifications.json
+/config/device.lease
+/config/exchange/
+/exchange/
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+*.tmp
+*.log
+
+# local data overrides (bundled-data is generated & committed; these are local)
+/tasks/
+/assets/
+/frames/
+/scheduler.json
