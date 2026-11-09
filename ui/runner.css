@@ -271,6 +271,16 @@ main.runner-main {
   line-height: 1.4;
 }
 
+/* U-T6：派生参数行（来自 ocr_var 素材）的「素材 <id> · 当前默认「…」」副标题 */
+.runner-config-asset-sub {
+  margin-top: 2px;
+  margin-bottom: 4px;
+  color: var(--runner-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .runner-config-hint {
   margin-top: 4px;
   color: var(--runner-muted);
@@ -1054,3 +1064,6 @@ main.runner-main {
     justify-content: flex-start;
   }
 }
+
+/* V2.0c：required 无值 = 行内橙色提示（允许保存，运行前告警） */
+.runner-config-row.required-missing .runner-config-row-hint { color: #e8c46a; }

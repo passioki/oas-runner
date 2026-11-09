@@ -11,7 +11,10 @@
   // PR6: queue-page scheduler status poll + temp-run result poll.
   const RUNNER_SCHED_POLL_MS = 5000;
   const RUNNER_RUN_POLL_MS = 500;
-  const RUNNER_RUN_POLL_MAX_MS = 60000;
+  // seq151 P0：60s 不是失败阈值，只是历史提示线；轮询指数退避到 2s 并持续到
+  // running=false（后端有 300s wall budget 自己会终止）。
+  const RUNNER_RUN_POLL_MAX_DELAY_MS = 2000;
+  const RUNNER_RUN_ELAPSED_WARN_MS = 60000;
   // P0-1a: Studio publish notifications (exchange) are polled while the page is
   // visible; hidden tabs pause the timer (see visibilitychange in init()).
   const RUNNER_UPDATES_POLL_MS = 5000;
@@ -95,6 +98,9 @@
   let runBusy = false;
   let runPollTimer = null;
   let runPollStartedMs = 0;
+  // seq151：当前轮询退避间隔（500ms→1s→2s cap）与恢复请求去重。
+  let runPollDelayMs = RUNNER_RUN_POLL_MS;
+  let runRecoverInFlight = false;
   let queuePollTimer = null;
   let stopPollTimer = null;
   let stopPollStartedMs = 0;
@@ -462,28 +468,131 @@
   }
 
   // Declared order preserved; empty/missing group falls into 「通用」. Groups are
-  // ordered by first appearance in meta.params.
-  function runnerParamGroups(params) {
+  // ordered by first appearance in meta.params. 派生参数行（带 asset_id，来自
+  // ocr_var 素材）永远进入最前面的独立分组「使用端OCR文字配置项」（Lead 裁决 8：
+  // UI 全名；行内短标「识别文字配置」）；旧任务 role=ocr_text 但无 asset_id 的行
+  // 仍按自己的 group 分节（兼容，不破坏旧行为）。
+
+  // Full grouping model: one leading ocr_var section + the regular group sections.
+  // `kind` lets the renderer/tests tell the two apart without string matching.
+  function runnerParamGroupsEx(params) {
     const list = Array.isArray(params) ? params : [];
     const groups = [];
     const index = {};
+    const derived = { group: '使用端OCR文字配置项', kind: 'ocr_var', params: [] };
     for (const param of list) {
       if (!param || typeof param !== 'object' || Array.isArray(param)) continue;
+      const assetId = param.asset_id === undefined || param.asset_id === null
+        ? ''
+        : String(param.asset_id).trim();
+      if (assetId) {
+        derived.params.push(param);
+        continue;
+      }
       const raw = param.group === undefined || param.group === null ? '' : String(param.group).trim();
       const group = raw || '通用';
       if (!Object.prototype.hasOwnProperty.call(index, group)) {
         index[group] = groups.length;
-        groups.push({ group: group, params: [] });
+        groups.push({ group: group, kind: 'group', params: [] });
       }
       groups[index[group]].params.push(param);
+    }
+    return derived.params.length ? [derived].concat(groups) : groups;
+  }
+
+  // Backwards-compatible view used by the summary/collector/renderer.
+  function runnerParamGroups(params) {
+    return runnerParamGroupsEx(params).map(function (group) {
+      return { group: group.group, params: group.params };
+    });
+  }
+
+  // D 批（去参数 UI）：Runner 只显示/收集「使用端OCR文字配置项」（asset_id 派生行）；
+  // 通用参数组隐藏（代码保留，服务端 meta.params 派生模型不动）。
+  function runnerParamOcrVarOnly(params) {
+    const list = Array.isArray(params) ? params : [];
+    return list.filter(function (param) {
+      if (!param || typeof param !== 'object' || Array.isArray(param)) return false;
+      const assetId = param.asset_id === undefined || param.asset_id === null
+        ? ''
+        : String(param.asset_id).trim();
+      return !!assetId;
+    });
+  }
+
+  // --- V2.0c：Runner「使用端变量」分节（meta.variables；替换 meta.params 派生行） --
+  // 只显示 runner_editable && scope=input 的变量；ocr_text 在前（识别文字变量），
+  // 其余（literal）按 group 分节（空组=通用）。
+  function runnerVariableEditable(variable) {
+    const v = variable && typeof variable === 'object' && !Array.isArray(variable) ? variable : null;
+    if (!v) return false;
+    if (v.runner_editable === false) return false;
+    const scope = String(v.scope === undefined || v.scope === null ? 'input' : v.scope).trim();
+    return scope !== 'runtime';
+  }
+
+  function runnerVariableRows(variables) {
+    const list = Array.isArray(variables) ? variables : [];
+    return list.filter(runnerVariableEditable);
+  }
+
+  function runnerVariableGroups(variables) {
+    const rows = runnerVariableRows(variables);
+    const ocr = [];
+    const literal = [];
+    for (const v of rows) {
+      const source = String(v.value_source === undefined || v.value_source === null
+        ? 'literal' : v.value_source).trim();
+      if (source === 'ocr_text') ocr.push(v);
+      else literal.push(v);
+    }
+    const groups = [];
+    if (ocr.length) groups.push({ group: '识别文字变量', kind: 'ocr_text', variables: ocr });
+    const index = {};
+    for (const v of literal) {
+      const raw = String(v.group === undefined || v.group === null ? '' : v.group).trim();
+      const group = raw || '通用';
+      if (!Object.prototype.hasOwnProperty.call(index, group)) {
+        index[group] = { group: group, kind: 'literal', variables: [] };
+        groups.push(index[group]);
+      }
+      index[group].variables.push(v);
     }
     return groups;
   }
 
+  function runnerVariableSummary(variables, values) {
+    const rows = runnerVariableRows(variables);
+    const src = values && typeof values === 'object' ? values : {};
+    let filled = 0;
+    for (const v of rows) {
+      const key = String(v.key === undefined || v.key === null ? '' : v.key);
+      if (key && Object.prototype.hasOwnProperty.call(src, key) && src[key] !== null) filled += 1;
+    }
+    if (!rows.length) return '0 个使用端变量';
+    return rows.length + ' 个使用端变量 · 已填 ' + filled + ' · 分组 ' +
+      runnerVariableGroups(rows).length + ' 个';
+  }
+
   function runnerParamRoleText(param) {
     const p = param && typeof param === 'object' ? param : {};
+    const assetId = String(p.asset_id === undefined || p.asset_id === null ? '' : p.asset_id).trim();
+    if (assetId) return '识别文字配置';
     const role = String(p.role === undefined || p.role === null ? '' : p.role).trim().toLowerCase();
     return role === 'ocr_text' ? '识别文字' : '';
+  }
+
+  // 派生行的副标题：「素材 <asset_id> · 当前默认「<default>」」（任务 U-T6）。
+  // 空 = 普通用户参数（不渲染副标题）。
+  function runnerParamAssetSubtitle(param) {
+    const p = param && typeof param === 'object' ? param : {};
+    const assetId = String(p.asset_id === undefined || p.asset_id === null ? '' : p.asset_id).trim();
+    if (!assetId) return '';
+    let text = '素材 ' + assetId;
+    if (p.default !== undefined && p.default !== null) {
+      text += ' · 当前默认「' + runnerParamDefaultText(p) + '」';
+    }
+    return text;
   }
 
   function runnerParamTypeText(param) {
@@ -917,6 +1026,45 @@
   }
 
   // One sentence for GET /runner/run/status (running / finished / failed).
+  function runnerRunElapsedMs(startedMs, nowMs) {
+    const started = Number(startedMs) || 0;
+    if (!started) return 0;
+    const now = Number.isFinite(Number(nowMs)) ? Number(nowMs) : Date.now();
+    return Math.max(0, now - started);
+  }
+
+  function runnerRunElapsedText(startedMs, nowMs) {
+    const ms = runnerRunElapsedMs(startedMs, nowMs);
+    if (!ms) return '0s';
+    const total = Math.floor(ms / 1000);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return m > 0 ? (m + 'm' + (s < 10 ? '0' : '') + s + 's') : (s + 's');
+  }
+
+  function runnerNextRunPollDelay(currentMs) {
+    const n = Number(currentMs);
+    const base = Number.isFinite(n) && n > 0 ? n : RUNNER_RUN_POLL_MS;
+    return Math.min(RUNNER_RUN_POLL_MAX_DELAY_MS, Math.max(RUNNER_RUN_POLL_MS, base * 2));
+  }
+
+  function runnerRunStillRunning(status) {
+    return !!(status && status.running === true);
+  }
+
+  // seq151：运行中状态行（含 elapsed 与无停止接口提示），不再把 60s 当错误。
+  function runnerRunningStatusText(status) {
+    const s = status && typeof status === 'object' ? status : {};
+    const task = s.task === undefined || s.task === null || s.task === '' ? '—' : String(s.task);
+    const started = Number(s.started_ms) || runPollStartedMs;
+    const elapsedMs = runnerRunElapsedMs(started, Date.now());
+    const elapsed = runnerRunElapsedText(started, Date.now());
+    return '运行中：' + task + ' · 已运行 ' + elapsed +
+      (elapsedMs >= RUNNER_RUN_ELAPSED_WARN_MS ? '（已超过 60s，仍在运行）' : '') +
+      '（仍在运行，轮询中；当前版本无 Runner 停止接口，最长约 300s budget 后自动终止）';
+  }
+
+  // One sentence for GET /runner/run/status (running / finished / failed).
   function runnerRunStatusText(status) {
     const s = status && typeof status === 'object' ? status : {};
     const task = s.task === undefined || s.task === null || s.task === '' ? '' : String(s.task);
@@ -1300,6 +1448,8 @@
     el.runTask = document.getElementById('runner-run-task');
     el.runParams = document.getElementById('runner-run-params');
     el.runSubmit = document.getElementById('runner-run-submit');
+    el.runStop = document.getElementById('runner-run-stop');
+    el.runStopHint = document.getElementById('runner-run-stop-hint');
     el.runStatus = document.getElementById('runner-run-status');
     el.runError = document.getElementById('runner-run-error');
     el.runLog = document.getElementById('runner-run-log');
@@ -2178,8 +2328,14 @@
     control.disabled = !enabled;
     const state = runnerParamUseState(param, control.value, enabled);
     const base = runnerConfigHintText(param, runnerConfigFieldKind(param));
-    if (hint) hint.textContent = [base, state.hint].filter(Boolean).join(' · ');
-    row.classList.toggle('blocked', state.blocked || !!(err && err.textContent));
+    // V2.0c: required 且无值 = 行内橙色提示（允许保存，运行前告警），不阻断。
+    const requiredMissing = param && param.required === true && state.hasValue !== true;
+    if (hint) {
+      hint.textContent = [base, state.hint,
+        requiredMissing ? '必填：使用端应填写（允许保存，运行前告警）' : ''].filter(Boolean).join(' · ');
+    }
+    row.classList.toggle('required-missing', !!requiredMissing);
+    row.classList.toggle('blocked', !requiredMissing && (state.blocked || !!(err && err.textContent)));
   }
 
   function refreshAllRunnerConfigRows() {
@@ -2197,7 +2353,7 @@
       if (form.useFlags[key] === false) continue;
       visible[key] = form.rawValues[key];
     }
-    el.configSummary.textContent = runnerParamSummary(configParams, visible);
+    el.configSummary.textContent = runnerVariableSummary(configParams, visible);
   }
 
   function runnerParamTypeBadges(param) {
@@ -2246,6 +2402,15 @@
     keyEl.textContent = key;
     label.appendChild(keyEl);
     meta.appendChild(label);
+    // U-T6：派生参数行（来自 ocr_var 素材）显示「素材 <id> · 当前默认「…」」，
+    // 让使用端知道这一项改的是哪个素材的识别文字。
+    const assetSubtitle = runnerParamAssetSubtitle(p);
+    if (assetSubtitle) {
+      const sub = document.createElement('div');
+      sub.className = 'runner-config-asset-sub';
+      sub.textContent = assetSubtitle;
+      meta.appendChild(sub);
+    }
     if (p.description !== undefined && p.description !== null && String(p.description).trim() !== '') {
       const desc = document.createElement('div');
       desc.className = 'runner-config-desc';
@@ -2347,12 +2512,12 @@
     el.configFields.className = '';
     configValues = values && typeof values === 'object' ? values : {};
     if (!params.length) {
-      el.configFields.textContent = '该任务没有配置项（编辑端未声明 meta.params）';
+      el.configFields.textContent = '该任务没有使用端可配置的变量';
       el.configFields.className = 'runner-config-empty';
       updateRunnerConfigSummary();
       return;
     }
-    const groups = runnerParamGroups(params);
+    const groups = runnerVariableGroups(params);
     let index = 0;
     for (const group of groups) {
       const details = document.createElement('details');
@@ -2362,12 +2527,12 @@
       summary.textContent = group.group;
       const count = document.createElement('span');
       count.className = 'runner-config-group-count';
-      count.textContent = group.params.length + ' 项';
+      count.textContent = group.variables.length + ' 项';
       summary.appendChild(count);
       details.appendChild(summary);
       const body = document.createElement('div');
       body.className = 'runner-config-group-body';
-      for (const param of group.params) {
+      for (const param of group.variables) {
         const row = buildRunnerConfigRow(param, index);
         index += 1;
         if (row) body.appendChild(row);
@@ -2418,14 +2583,18 @@
     try {
       const body = await runnerFetchJson(runnerConfigUrl(task));
       if (configTask !== task) return; // 已关闭/切换到别的任务，丢弃过期响应
-      const params = Array.isArray(body.params) ? body.params : [];
+      // V2.0c: new API returns variables; legacy params fallback keeps old runners alive.
+      const variables = Array.isArray(body.variables) ? body.variables : [];
+      const params = variables.length
+        ? runnerVariableRows(variables)
+        : runnerParamOcrVarOnly(Array.isArray(body.params) ? body.params : []);
       const values = body.values && typeof body.values === 'object' ? body.values : {};
       configParams = params;
       configLoaded = true;
       renderRunnerConfigFields(params, values);
       if (el.configError) el.configError.textContent = '';
       if (el.configStatus) {
-        let statusText = '已加载 ' + params.length + ' 项配置';
+        let statusText = '已加载 ' + params.length + ' 项使用端变量';
         if (body.updated_ms !== undefined && body.updated_ms !== null) {
           statusText += ' · 上次保存 ' + runnerTimeText(body.updated_ms);
         }
@@ -2508,7 +2677,8 @@
     try {
       const body = await runnerFetchJson(runnerConfigUrl(task), {
         method: 'PUT',
-        body: { values: collected.values },
+        // D 批：表单只编辑 ocr_var 派生行；未显示的通用参数值原样保留（不清空旧值）。
+        body: { values: Object.assign({}, configValues, collected.values) },
       });
       const saved = body.values && typeof body.values === 'object' ? body.values : collected.values;
       const savedCount = Object.keys(saved).length;
@@ -5332,6 +5502,8 @@ function resetTaskChecks(mode) {
   function setRunBusy(busy) {
     runBusy = !!busy;
     if (el.runSubmit) el.runSubmit.disabled = !!busy;
+    // seq151：停止按钮在无后端接口时始终禁用（不假实现）。
+    if (el.runStop) el.runStop.disabled = true;
   }
 
   function renderRunTaskOptions() {
@@ -5400,6 +5572,8 @@ function resetTaskChecks(mode) {
     if (schedError) errors.push(schedError);
     const pageErrors = await refreshSchedulePage();
     for (const message of pageErrors) errors.push(message);
+    // seq151：页面加载/切回 queue 时恢复当前 run 的轮询（刷新不丢运行中状态）。
+    await resumeRunnerRunPolling();
     return errors;
   }
 
@@ -5579,7 +5753,10 @@ function resetTaskChecks(mode) {
           status.outcome !== '') {
         cls = 'muted small ' + (runnerOutcomeClass(status.outcome) === 'ok' ? 'ok' : 'err');
       } else if (status && status.error) cls = 'muted small err';
-      el.runStatus.textContent = runnerRunStatusText(status);
+      // seq151：运行中显示 elapsed/轮询/无停止接口提示，不显示 60s 超时。
+      el.runStatus.textContent = status && status.running === true
+        ? runnerRunningStatusText(status)
+        : runnerRunStatusText(status);
       el.runStatus.className = cls;
     }
     if (el.runLog) {
@@ -5604,35 +5781,62 @@ function resetTaskChecks(mode) {
     }
   }
 
-  function scheduleRunnerRunPoll() {
+  function scheduleRunnerRunPoll(delayMs) {
     stopRunnerRunPolling();
-    runPollTimer = setTimeout(pollRunnerRunOnce, RUNNER_RUN_POLL_MS);
+    const d = Number.isFinite(Number(delayMs)) && Number(delayMs) > 0
+      ? Math.min(RUNNER_RUN_POLL_MAX_DELAY_MS, Math.max(RUNNER_RUN_POLL_MS, Number(delayMs)))
+      : runPollDelayMs;
+    runPollDelayMs = d;
+    runPollTimer = setTimeout(pollRunnerRunOnce, d);
+  }
+
+  // seq151：页面加载/切回 Queue 时恢复当前 run 轮询（running=true 才启动 timer）。
+  async function resumeRunnerRunPolling() {
+    if (runRecoverInFlight || runPollTimer !== null) return;
+    runRecoverInFlight = true;
+    try {
+      const status = await runnerFetchJson(RUNNER_API.runStatus);
+      renderRunnerRunStatus(status);
+      if (runnerRunStillRunning(status)) {
+        runPollStartedMs = Number(status && status.started_ms) || Date.now();
+        runPollDelayMs = RUNNER_RUN_POLL_MS;
+        setRunBusy(true);
+        scheduleRunnerRunPoll(runPollDelayMs);
+      } else {
+        setRunBusy(false);
+      }
+    } catch (e) {
+      // 页面恢复失败不阻塞；用户可手动刷新。
+    } finally {
+      runRecoverInFlight = false;
+    }
   }
 
   async function pollRunnerRunOnce() {
     runPollTimer = null;
-    if (Date.now() - runPollStartedMs > RUNNER_RUN_POLL_MAX_MS) {
-      if (el.runStatus) {
-        el.runStatus.textContent = '超时：' + Math.round(RUNNER_RUN_POLL_MAX_MS / 1000) +
-          ' 秒内未收到结果（运行可能仍在继续，可稍后刷新本页）';
-        el.runStatus.className = 'muted small warn';
-      }
-      setRunBusy(false);
-      return;
-    }
     let status = null;
     try {
       status = await runnerFetchJson(RUNNER_API.runStatus);
     } catch (e) {
+      // status 查询失败不是运行失败：保留运行中状态，退避重试（不放弃）。
       if (el.runError) el.runError.textContent = runnerErrorLines(e).join('\n');
-      scheduleRunnerRunPoll();
+      if (el.runStatus) {
+        el.runStatus.textContent = '状态查询失败，仍在退避轮询…（' + runnerRunElapsedText(runPollStartedMs, Date.now()) + '）';
+        el.runStatus.className = 'muted small warn';
+      }
+      runPollDelayMs = runnerNextRunPollDelay(runPollDelayMs);
+      scheduleRunnerRunPoll(runPollDelayMs);
       return;
     }
     renderRunnerRunStatus(status);
-    if (status && status.running === true) {
-      scheduleRunnerRunPoll();
+    if (runnerRunStillRunning(status)) {
+      // seq151：60s 后仍 running 继续轮询；按钮保持 disabled。
+      setRunBusy(true);
+      runPollDelayMs = runnerNextRunPollDelay(runPollDelayMs);
+      scheduleRunnerRunPoll(runPollDelayMs);
       return;
     }
+    runPollDelayMs = RUNNER_RUN_POLL_MS;
     stopRunnerRunPolling();
     setRunBusy(false);
     const text = runnerRunStatusText(status);
@@ -5669,7 +5873,8 @@ function resetTaskChecks(mode) {
       }
       setPageStatus('已提交临时运行：' + parsed.body.task, 'ok');
       runPollStartedMs = Date.now();
-      scheduleRunnerRunPoll();
+      runPollDelayMs = RUNNER_RUN_POLL_MS;
+      scheduleRunnerRunPoll(runPollDelayMs);
     } catch (e) {
       if (el.runError) el.runError.textContent = runnerErrorLines(e).join('\n');
       if (el.runStatus) {
@@ -5691,6 +5896,8 @@ function resetTaskChecks(mode) {
         el.runStatus.className = 'muted small err';
       }
       setRunBusy(false);
+      // seq151：409 run_busy 不放弃——恢复对现有运行的轮询（按钮仍禁用）。
+      if (e && e.status === 409 && runPollTimer === null) resumeRunnerRunPolling();
     }
   }
 
@@ -5874,8 +6081,11 @@ function resetTaskChecks(mode) {
   function showPage(name) {
     const page = RUNNER_PAGES.indexOf(name) >= 0 ? name : 'overview';
     state.page = page;
-    if (page === 'queue') startQueuePolling();
-    else stopQueuePolling();
+    if (page === 'queue') {
+      startQueuePolling();
+      // seq151：从其它页切回 Queue 时恢复当前 run 轮询。
+      resumeRunnerRunPolling();
+    } else stopQueuePolling();
     for (const pane of el.pages) {
       pane.classList.toggle('active', pane.id === 'page-' + page);
     }

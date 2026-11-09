@@ -1,4 +1,4 @@
-# 构建、打包与运行（oasd-runner）
+﻿# 构建、打包与运行（oasd-runner）
 
 > Phase 1b **已完成**：Runner 的二进制入口、Runner UI、打包脚本、`bundled-data` 数据快照、
 > 启停脚本与说明文档都在本仓；引擎能力（HTTP 服务、内嵌调度、包安装、Runner 配置等）
@@ -13,7 +13,7 @@
 oasd = { git = "https://github.com/passioki/oas-core", rev = "<oas-core commit>", features = ["ocr"] }
 ```
 
-- 当前 rev：**`802f58b92d050bc965492338904002c37ba7d160`**（oas-core seq 116；新增
+- 当前 rev：**`fe3d4ae54610e27b7fae6f7646226c0b08838100`**（oas-core 0.2.0 发布提交；新增
   `oasd::cli::run_as_with_args`，本仓用它注入默认 `--ui ui`）。
 - 升级流程（刻意显式，避免两仓漂移）：
   1. oas-core 有 Runner 相关改动 → 合并/推送到 oas-core `dev`；
@@ -74,7 +74,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\package-runner.ps1 `
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `-Version` | `0.1.0` | 包版本（VERSION / BUILD-INFO / 默认 zip 名） |
+| `-Version` | `0.2.0` | 包版本（VERSION / BUILD-INFO / 默认 zip 名） |
 | `-DataFrom` | 自动探测 `..\oas-core` | oas-core 检出：其 `tasks\` + `assets\` 生成 `bundled-data\`；不存在且未 `-NoData` → 报错 |
 | `-NoData` | 关 | 不生成 `bundled-data\`（程序-only 包） |
 | `-ToolkitFrom` | 自动探测 `..\oas-core\backend\toolkit` / `D:\OAS-dev\backend\toolkit` | 含 OCR 模型 + Windows adb；支持扁平 `<root>\models`+`<root>\adb` 与 Python 布局 `<root>\Lib\site-packages\rapidocr\models`+`adbutils\binaries` |
@@ -159,5 +159,5 @@ oasd-runner.exe --port 8789 --tasks-dir tasks --runs-dir runs --assets-dir asset
   `/runner/health` 200、`GET /` 200（Runner UI）、`/app.js` 404、`/task/lint` 404、
   `bundled-data` 首启导入 3 任务 + 素材、`--ui <dir>` 显式覆盖生效。
 - 未覆盖/后续：打 tag / GitHub Release 与两仓版本号联动策略（Lead 决定）；
-  `--version` 打印仍为 `oasd 0.1.0`（引擎内文案，需 oas-core 改动）；
+  `--version` 打印为 `oasd 0.2.0`（继承 oas-core 0.2.0）；
   ort/onnxruntime 首次下载的网络前提（同 oas-core）；macOS/Linux 打包未做（v1 只 Windows）。

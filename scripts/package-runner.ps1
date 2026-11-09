@@ -336,7 +336,7 @@ if ($DryRun) {
   }
   Write-Host "  [GENERATE] config\live.json          <- copy of live.example.json"
   Write-Host "  [GENERATE] scheduler.json            <- empty schema v4 plan (BOM-free)"
-  Write-Host "  [GENERATE] tasks\README.txt + packages/runs/logs/assets/frames/relations/templates .keep"
+  Write-Host "  [GENERATE] tasks\README.txt + packages/runs/logs/assets .keep (no frames/relations/templates: Runner must not ship frames)"
   Write-Host "  [GENERATE] VERSION, BUILD-INFO.txt"
   if ($NoData) {
     Write-Host "  [DATA]     bundled-data\              <- SKIPPED (-NoData)"
@@ -366,7 +366,7 @@ if ($DryRun) {
 Write-Host "-- staging $Stage"
 if (Test-Path $Stage) { Remove-Item $Stage -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $Stage | Out-Null
-foreach ($d in @("ui", "config", "packages", "tasks", "assets", "runs", "logs", "frames", "relations", "templates")) {
+foreach ($d in @("ui", "config", "packages", "tasks", "assets", "runs", "logs")) {
   New-Item -ItemType Directory -Force -Path (Join-Path $Stage $d) | Out-Null
 }
 if ($null -ne $Toolkit) {
@@ -407,7 +407,7 @@ Copy-Item (Join-Path $Stage "config\live.example.json") (Join-Path $Stage "confi
 # data placeholders (zip keeps empty dirs only if they contain a file)
 "# OAS Runner tasks`r`n`r`nInstall task packages (.oaspkg) from the Runner UI; each package`r`ncreates one task directory here. On first start the bundled-data\ snapshot is`r`nimported when this directory has no task yet." |
   Write-Utf8NoBom -Path (Join-Path $Stage "tasks\README.txt")
-foreach ($k in @("packages\.keep", "runs\.keep", "logs\.keep", "assets\.keep", "frames\.keep", "relations\.keep", "templates\.keep")) {
+foreach ($k in @("packages\.keep", "runs\.keep", "logs\.keep", "assets\.keep")) {
   "" | Set-Content -Encoding ASCII (Join-Path $Stage $k)
 }
 
@@ -539,7 +539,7 @@ $requiredStage = @(
   "config\live.example.json", "config\live.json",
   "start-runner.bat", "stop-runner.bat", "README-RUNNER.txt",
   "scheduler.json", "tasks\README.txt", "packages\.keep", "runs\.keep",
-  "logs\.keep", "assets\.keep", "frames\.keep", "relations\.keep", "templates\.keep",
+  "logs\.keep", "assets\.keep",
   "VERSION", "BUILD-INFO.txt"
 )
 if ($null -ne $Toolkit) {

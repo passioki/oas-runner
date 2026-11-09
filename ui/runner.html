@@ -193,14 +193,20 @@
           <label class="opt">任务
             <select id="runner-run-task"></select>
           </label>
-          <label class="opt">参数 JSON（可选）
+          <label class="opt" hidden>参数 JSON（可选；D 批起隐藏，代码保留作调试逃生口）
             <textarea id="runner-run-params" class="runner-pre runner-run-params" rows="3"
               spellcheck="false" placeholder='{"触发文字":"突破"}'>{}</textarea>
           </label>
           <div class="row">
             <button id="runner-run-submit" type="button">立即运行</button>
+            <button id="runner-run-stop" type="button" disabled
+              title="当前版本没有 /runner/run/stop 后端接口，无法停止；运行最多约 300s budget 后由后端终止">停止运行（当前版本不支持）</button>
             <span id="runner-run-status" class="muted small" role="status" aria-live="polite">—</span>
           </div>
+          <p id="runner-run-stop-hint" class="muted small">
+            当前版本无 Runner 停止接口：运行中无法在此停止，最多约 300s budget 后自动终止；
+            刷新/切回本页会自动恢复运行状态轮询（60s 后继续等待，不再显示假超时）。
+          </p>
           <pre id="runner-run-error" class="muted small dialog-error"></pre>
           <pre id="runner-run-log" class="runner-pre runner-run-log"></pre>
         </section>
@@ -456,7 +462,7 @@
         <input id="sched-entry-cooldown" type="number" min="0" max="604800" value="300" />
       </label>
     </div>
-    <label class="opt">params（JSON 对象，可空；队列条目的 params 对全部成员生效）
+    <label class="opt" hidden>params（JSON 对象，可空；D 批起隐藏，代码保留作调试逃生口）
       <textarea id="sched-entry-params" rows="3" class="builder-code" spellcheck="false"
         placeholder='{"max_battles":3}'></textarea>
     </label>
@@ -519,14 +525,18 @@
     </div>
   </dialog>
 
-  <!-- PR2：已安装任务的运行值（Runner 本机 config/values.json）；P2 起按 group 分节 -->
+  <!-- PR2：已安装任务的运行值（Runner 本机 config/values.json）；D 批（去参数 UI）：
+       只显示「使用端OCR文字配置项」（带 asset_id 的派生行），通用参数组隐藏（代码保留）。 -->
   <dialog id="runner-config-dialog" class="task-dialog runner-config-dialog">
     <h3 id="runner-config-title">任务配置</h3>
     <p class="muted small">
       运行值保存在 Runner 本机（config/values.json）；单任务运行时使用这里的值；
       被其他任务作为子任务调用时使用调用方的配置（PR4 生效）。<br />
-      参数按 <code>meta.params[].group</code> 分节；取消「使用」或值留空 = 不注入（回退默认值）。
-      保存只影响下一次运行，正在跑的任务使用启动时的值。
+      只显示「使用端可改」的变量：<br />
+      ①「识别文字变量」= 绑定 ocr_var 素材的识别文字（改值 = 改对应素材的识别文字）；<br />
+      ②「使用端变量」= 变量面板声明的标量变量（按分组展示）。<br />
+      runtime 变量与「使用端不可改」的变量不会出现在这里。
+      取消「使用」或值留空 = 不注入（回退默认值）；保存只影响下一次运行。
     </p>
     <div id="runner-config-summary" class="runner-config-summary muted small">—</div>
     <div id="runner-config-status" class="muted small" role="status" aria-live="polite">—</div>

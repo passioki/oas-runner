@@ -372,8 +372,8 @@ dependencies = [
 
 [[package]]
 name = "oas-adapter-pc"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-codec",
  "oas-types",
@@ -381,8 +381,8 @@ dependencies = [
 
 [[package]]
 name = "oas-codec"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-types",
  "png",
@@ -390,8 +390,8 @@ dependencies = [
 
 [[package]]
 name = "oas-flow"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-types",
  "serde",
@@ -400,8 +400,8 @@ dependencies = [
 
 [[package]]
 name = "oas-obs"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-codec",
  "oas-types",
@@ -411,8 +411,8 @@ dependencies = [
 
 [[package]]
 name = "oas-ocr"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-types",
  "ort",
@@ -420,16 +420,16 @@ dependencies = [
 
 [[package]]
 name = "oas-perceive"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-types",
 ]
 
 [[package]]
 name = "oas-runtime"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-flow",
  "oas-perceive",
@@ -438,8 +438,8 @@ dependencies = [
 
 [[package]]
 name = "oas-task"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-codec",
  "oas-flow",
@@ -454,13 +454,16 @@ dependencies = [
 
 [[package]]
 name = "oas-types"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "oasd"
-version = "0.1.0"
-source = "git+https://github.com/passioki/oas-core?rev=ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e#ba6813e045ce89ff72d8cc1e0cc7eb9a7f2e119e"
+version = "0.2.0"
+source = "git+https://github.com/passioki/oas-core?rev=fe3d4ae#fe3d4ae54610e27b7fae6f7646226c0b08838100"
 dependencies = [
  "oas-adapter-pc",
  "oas-codec",
@@ -477,7 +480,7 @@ dependencies = [
 
 [[package]]
 name = "oasd-runner"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "oasd",
 ]
