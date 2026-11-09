@@ -120,10 +120,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\package-runner.ps1 `
 
 ## 5. 运行（Windows 本机）
 
+源码树一键启动已打包好的 `dist\stage-runner`（推荐开发/联调用）：
+
+```powershell
+# 双击 scripts\start-runner.bat，或：
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-runner.ps1
+
+# 参数：-Port 8799 -NoOpen / -DryRun / -Stop
+# 指定其它 stage：-StageDir D:\some\runner-package
+```
+
+脚本会校验 stage、复制 `config\live.json`（缺失时）、启动 `oasd-runner.exe`、
+等待 `/runner/health` 通过后打开 `http://127.0.0.1:<port>/`；失败时打印
+`logs\runner.out.log` / `logs\runner.err.log` 尾部并返回非 0。
+`dist\stage-runner` 不存在时先执行 §4 的打包脚本。
+
+在带 `ui\`、`config\live.json` 的发布目录里也可直接运行：
+
 ```powershell
 # 在带 ui\、config\live.json 的发布目录里（默认 UI 目录 = .\ui，无需 --ui）
 oasd-runner.exe --port 8789 --tasks-dir tasks --runs-dir runs --assets-dir assets --config config\live.json --no-open
-# 或直接双击 start-runner.bat
+# 或直接双击发布包内的 start-runner.bat
 ```
 
 - `run_as_with_args("runner", ...)` 已锁定 Runner surface：Studio 路由一律 404（不会误开 8788 编辑端）。

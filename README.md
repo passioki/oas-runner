@@ -13,6 +13,7 @@ oas-runner/
   ui/                    runner.html / runner.js / runner.css / style.css
   packaging/             README-RUNNER.txt / live.example.json / start-runner.bat / stop-runner.bat
   scripts/               package-runner.ps1（独立打包 Runner-only 发布包）
+                         start-runner.ps1 / start-runner.bat（源码树一键启动已打包的 dist\stage-runner）
   docs/                  BUILD.md（构建/打包/运行）· UPDATES.md（更新检测 feeds）
   target/ dist/          构建/打包产物（不入 git）
 ```
@@ -40,6 +41,21 @@ oas-runner/
 - 构建/打包/运行细节：[docs/BUILD.md](docs/BUILD.md)。
 
 ## 快速开始
+
+### 源码树一键启动（已有 `dist\stage-runner` 打包产物）
+
+```powershell
+# 双击 scripts\start-runner.bat，或：
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-runner.ps1
+
+# 可选：-Port 8799 -NoOpen / -DryRun / -Stop
+```
+
+脚本会检查 `dist\stage-runner`、复制 `config\live.json`（若缺失）、启动
+`oasd-runner.exe`、等待 `/runner/health` 通过，再打开 `http://127.0.0.1:8789/`。
+若 `dist\stage-runner` 不存在，先按下方打包步骤生成。
+
+### 构建与打包
 
 ```powershell
 # 构建
