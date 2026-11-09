@@ -90,7 +90,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\package-runner.ps1 `
 `adb\`、`bundled-data\{manifest.json,tasks\**,assets\**}`（`-NoData` 时无）、
 `config\live.example.json` + `live.json`、`start-runner.bat` / `stop-runner.bat`、
 `README-RUNNER.txt`、`scheduler.json`（空 schema v4）、空数据目录占位
-（`tasks\ assets\ frames\ relations\ templates\ runs\ logs\ packages\`）、`VERSION`、`BUILD-INFO.txt`。
+（`tasks\ assets\ runs\ logs\ packages\`；不含 frames/relations/templates）、`VERSION`、`BUILD-INFO.txt`。
 
 **不含**：Studio 编辑 UI（`index.html`/`app.js`/`builder.js`/`flow_model.js`/`asset_ui.js`/
 `dashboard.*`）、Studio 二进制、`frames\`/`library\` 等创作数据。

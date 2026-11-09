@@ -1,4 +1,4 @@
-OAS Runner 使用端（终端用户发行包 · oas-runner 独立构建）
+﻿OAS Runner 使用端（终端用户发行包 · oas-runner 独立构建）
 ==========================================================
 
 本包由独立的 **oas-runner** 仓库构建（二进制名 oasd-runner.exe），只包含「使用端
@@ -47,7 +47,7 @@ assets\           全局素材（首次启动从 bundled-data 导入；安装任
 runs\             运行记录
 logs\             runner.log / scheduler.events.jsonl 等日志
 scheduler.json    调度/队列计划（初始为空，页面里添加）
-frames\ relations\ templates\   本包不使用（保留占位，避免配置路径缺失报错）
+frames\ relations\ templates\   本包不包含（Runner 不使用帧；不会创建这些目录）
 VERSION / BUILD-INFO.txt        版本与构建信息（BUILD-INFO 含锁定的 oas-core rev）
 
 
