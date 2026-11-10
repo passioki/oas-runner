@@ -8,7 +8,7 @@
 # cut yet; the commit hash is the source of truth). Bump `rev` deliberately
 # after an oas-core change, rebuild and commit the updated Cargo.lock.
 #
-# b04e25b = oas-core seq200 (off-screen gesture endpoints passed through)
+# a15dda3 = oas-core seq201 (recognized drag start clamp)
 # which adds `oasd::cli::run_as_with_args`, which the
 # Runner app uses to inject its own default `--ui ui` (see src/main.rs).
 [package]
@@ -23,4 +23,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "b04e25b3629f7b7242a11fb2a753863b0bc48286", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "a15dda33af823cd945d92fe2bad1cf792203d236", features = ["ocr"] }
