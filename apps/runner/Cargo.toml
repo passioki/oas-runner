@@ -8,7 +8,8 @@
 # cut yet; the commit hash is the source of truth). Bump `rev` deliberately
 # after an oas-core change, rebuild and commit the updated Cargo.lock.
 #
-# 7ce1827 = oas-core seq195 (condition appear false; variables_schema/package_schema=2),\n# which adds `oasd::cli::run_as_with_args`, which the
+# 7ce1827 = oas-core seq195 (condition appear false; variables_schema/package_schema=2),
+# which adds `oasd::cli::run_as_with_args`, which the
 # Runner app uses to inject its own default `--ui ui` (see src/main.rs).
 [package]
 name = "oasd-runner"
