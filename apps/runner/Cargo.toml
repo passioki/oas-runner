@@ -1,4 +1,4 @@
-# oasd-runner —— Runner/Studio 分离的轻薄 Runner 应用（Phase 1a）。
+﻿# oasd-runner —— Runner/Studio 分离的轻薄 Runner 应用（Phase 1a）。
 #
 # 全部 Runner 能力（HTTP 接口、内嵌调度、包安装、Runner 配置等）都在
 # `oasd` 引擎*库*中。本包只提供二进制，因此仅靠本仓即可构建 Runner。
@@ -22,4 +22,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "9e8524925abd75cedb81629732586c5a43776517", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "f894c5767c47ab0368705f8ad3a8d3a75fb6e519", features = ["ocr"] }
