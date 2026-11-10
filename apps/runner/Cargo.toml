@@ -8,7 +8,7 @@
 # cut yet; the commit hash is the source of truth). Bump `rev` deliberately
 # after an oas-core change, rebuild and commit the updated Cargo.lock.
 #
-# a15dda3 = oas-core seq201 (recognized drag start clamp)
+# 9e85249 = oas-core seq202 (revert drag-start clamp; user config issue)
 # which adds `oasd::cli::run_as_with_args`, which the
 # Runner app uses to inject its own default `--ui ui` (see src/main.rs).
 [package]
@@ -23,4 +23,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "a15dda33af823cd945d92fe2bad1cf792203d236", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "9e8524925abd75cedb81629732586c5a43776517", features = ["ocr"] }
