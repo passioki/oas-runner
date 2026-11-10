@@ -1,16 +1,16 @@
 @echo off
-REM Stop the OAS Runner started by start-runner.bat.
+chcp 65001 >nul
+REM 停止由 start-runner.bat 启动的 OAS Runner。
 REM
-REM Prefer the graceful HTTP stop so the embedded scheduler finishes the current
-REM attempt and releases the scheduler lock / device lease; fall back to a hard
-REM kill if the API is unreachable or the process is still alive after ~8s.
+REM 优先 HTTP 优雅停止，让内嵌调度器完成当前尝试并释放调度锁/设备租约；
+REM 若 API 不可达或约 8 秒后进程仍存活，则回退强制结束。
 setlocal
 powershell -NoProfile -Command ^
   "$ErrorActionPreference='SilentlyContinue';" ^
   "$api='http://127.0.0.1:8789/runner/scheduler/stop';" ^
   "$p=Get-NetTCPConnection -LocalPort 8789 -State Listen;" ^
-  "if (-not $p) { Write-Host 'runner not running'; exit 0 }" ^
-  "try { Invoke-WebRequest -Method Post -Uri $api -TimeoutSec 6 -UseBasicParsing | Out-Null; Write-Host 'stop requested (waiting for scheduler to settle)' } catch { Write-Host 'stop API unreachable; will force stop' }" ^
-  "for ($i=0; $i -lt 16; $i++) { Start-Sleep -Milliseconds 500; $p=Get-NetTCPConnection -LocalPort 8789 -State Listen; if (-not $p) { Write-Host 'runner stopped'; exit 0 } }" ^
-  "$p=Get-NetTCPConnection -LocalPort 8789 -State Listen; if ($p) { Stop-Process -Id $p.OwningProcess -Force; Write-Host 'runner force-stopped (scheduler attempt did not finish in time)' } else { taskkill /IM oasd-runner.exe /F >nul 2>&1; Write-Host 'runner stopped' }"
+  "if (-not $p) { Write-Host 'Runner 未在运行'; exit 0 }" ^
+  "try { Invoke-WebRequest -Method Post -Uri $api -TimeoutSec 6 -UseBasicParsing | Out-Null; Write-Host '已请求停止（等待调度器收尾）' } catch { Write-Host '停止 API 不可达；将强制停止' }" ^
+  "for ($i=0; $i -lt 16; $i++) { Start-Sleep -Milliseconds 500; $p=Get-NetTCPConnection -LocalPort 8789 -State Listen; if (-not $p) { Write-Host 'Runner 已停止'; exit 0 } }" ^
+  "$p=Get-NetTCPConnection -LocalPort 8789 -State Listen; if ($p) { Stop-Process -Id $p.OwningProcess -Force; Write-Host 'Runner 已强制停止（调度尝试未在时限内完成）' } else { taskkill /IM oasd-runner.exe /F >nul 2>&1; Write-Host 'Runner 已停止' }"
 endlocal
