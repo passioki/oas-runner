@@ -199,13 +199,13 @@
           </label>
           <div class="row">
             <button id="runner-run-submit" type="button">立即运行</button>
-            <button id="runner-run-stop" type="button" disabled
-              title="当前版本没有 /runner/run/stop 后端接口，无法停止；运行最多约 300s budget 后由后端终止">停止运行（当前版本不支持）</button>
+            <button id="runner-run-stop" type="button"
+              title="请求停止当前临时运行；当前步骤结束后退出（重复点击无副作用）">停止运行</button>
             <span id="runner-run-status" class="muted small" role="status" aria-live="polite">—</span>
           </div>
           <p id="runner-run-stop-hint" class="muted small">
-            当前版本无 Runner 停止接口：运行中无法在此停止，最多约 300s budget 后自动终止；
-            刷新/切回本页会自动恢复运行状态轮询（60s 后继续等待，不再显示假超时）。
+            运行中可点「停止运行」：后端在当前步骤边界退出，停止后本页继续轮询运行状态直到结束；
+            停止请求失败可重试。刷新/切回本页会自动恢复运行状态轮询。
           </p>
           <pre id="runner-run-error" class="muted small dialog-error"></pre>
           <pre id="runner-run-log" class="runner-pre runner-run-log"></pre>

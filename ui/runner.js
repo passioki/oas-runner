@@ -11,8 +11,8 @@
   // PR6: queue-page scheduler status poll + temp-run result poll.
   const RUNNER_SCHED_POLL_MS = 5000;
   const RUNNER_RUN_POLL_MS = 500;
-  // seq151 P0：60s 不是失败阈值，只是历史提示线；轮询指数退避到 2s 并持续到
-  // running=false（后端有 300s wall budget 自己会终止）。
+  // seq151：60s 不是失败阈值，只是历史提示线；轮询指数退避到 2s 并持续到
+  // running=false。seq196：运行中可随时点「停止运行」（后端在步骤边界退出）。
   const RUNNER_RUN_POLL_MAX_DELAY_MS = 2000;
   const RUNNER_RUN_ELAPSED_WARN_MS = 60000;
   // P0-1a: Studio publish notifications (exchange) are polled while the page is
@@ -50,6 +50,7 @@
     schedulerThreadStatus: '/runner/scheduler/status',
     run: '/runner/run',
     runStatus: '/runner/run/status',
+    runStop: '/runner/run/stop',
     schedulerRuns: '/runs/scheduler',
     schedulerReset: '/scheduler/reset',
     config: '/config',
@@ -96,6 +97,8 @@
   let schedBusy = false;
   let schedStopping = false;
   let runBusy = false;
+  // seq196：停止请求已发出、等 worker 在步骤边界退出。
+  let runStopping = false;
   let runPollTimer = null;
   let runPollStartedMs = 0;
   // seq151：当前轮询退避间隔（500ms→1s→2s cap）与恢复请求去重。
@@ -1052,7 +1055,12 @@
     return !!(status && status.running === true);
   }
 
-  // seq151：运行中状态行（含 elapsed 与无停止接口提示），不再把 60s 当错误。
+  // seq196：停止按钮文案（纯函数，便于纯测抽取）。
+  function runnerRunStopButtonText(stopping) {
+    return stopping === true ? '停止中…' : '停止运行';
+  }
+
+  // seq151：运行中状态行（含 elapsed），不再把 60s 当错误；seq196：运行中可停止。
   function runnerRunningStatusText(status) {
     const s = status && typeof status === 'object' ? status : {};
     const task = s.task === undefined || s.task === null || s.task === '' ? '—' : String(s.task);
@@ -1061,7 +1069,7 @@
     const elapsed = runnerRunElapsedText(started, Date.now());
     return '运行中：' + task + ' · 已运行 ' + elapsed +
       (elapsedMs >= RUNNER_RUN_ELAPSED_WARN_MS ? '（已超过 60s，仍在运行）' : '') +
-      '（仍在运行，轮询中；当前版本无 Runner 停止接口，最长约 300s budget 后自动终止）';
+      '（可点「停止运行」停止；停止在当前步骤结束后生效）';
   }
 
   // One sentence for GET /runner/run/status (running / finished / failed).
@@ -5502,8 +5510,13 @@ function resetTaskChecks(mode) {
   function setRunBusy(busy) {
     runBusy = !!busy;
     if (el.runSubmit) el.runSubmit.disabled = !!busy;
-    // seq151：停止按钮在无后端接口时始终禁用（不假实现）。
-    if (el.runStop) el.runStop.disabled = true;
+    if (!busy) runStopping = false;
+    // seq196：运行中即可停止；停止请求已发出（runStopping）时禁用按钮等
+    // run status 轮询到 running=false，避免重复请求。
+    if (el.runStop) {
+      el.runStop.disabled = !busy || runStopping;
+      el.runStop.textContent = runnerRunStopButtonText(runStopping);
+    }
   }
 
   function renderRunTaskOptions() {
@@ -5748,15 +5761,24 @@ function resetTaskChecks(mode) {
   function renderRunnerRunStatus(status) {
     if (el.runStatus) {
       let cls = 'muted small';
-      if (status && status.running === true) cls = 'muted small';
-      else if (status && status.outcome !== undefined && status.outcome !== null &&
+      const running = !!(status && status.running === true);
+      // seq196：停止请求后（本地点击或刷新后由服务端 `stopping` 恢复）显示
+      // “停止中…”并继续轮询，直到 running=false；不提前宣称已停止。
+      if (running && status && status.stopping === true) runStopping = true;
+      if (!running) runStopping = false;
+      if (running) {
+        cls = runStopping ? 'muted small warn' : 'muted small';
+      } else if (status && status.outcome !== undefined && status.outcome !== null &&
           status.outcome !== '') {
         cls = 'muted small ' + (runnerOutcomeClass(status.outcome) === 'ok' ? 'ok' : 'err');
       } else if (status && status.error) cls = 'muted small err';
-      // seq151：运行中显示 elapsed/轮询/无停止接口提示，不显示 60s 超时。
-      el.runStatus.textContent = status && status.running === true
-        ? runnerRunningStatusText(status)
-        : runnerRunStatusText(status);
+      if (running && runStopping) {
+        el.runStatus.textContent = '停止中…（等当前步骤结束后退出）';
+      } else {
+        el.runStatus.textContent = running
+          ? runnerRunningStatusText(status)
+          : runnerRunStatusText(status);
+      }
       el.runStatus.className = cls;
     }
     if (el.runLog) {
@@ -5844,6 +5866,51 @@ function resetTaskChecks(mode) {
     loadQueuePage();
   }
 
+  // seq196：点击「停止运行」→ POST /runner/run/stop。200 只表示 stop token 已
+  // 置位（{ok:true,stopping:true}），worker 在步骤边界退出；本函数保持“停止中…”
+  // 并用既有 run status 轮询到 running=false。失败可重试（按钮重新可用）。
+  async function stopRunnerRun() {
+    if (!runBusy || runStopping) return;
+    runStopping = true;
+    if (el.runStop) {
+      el.runStop.disabled = true;
+      el.runStop.textContent = runnerRunStopButtonText(true);
+    }
+    if (el.runError) el.runError.textContent = '';
+    if (el.runStatus) {
+      el.runStatus.textContent = '停止中…（等当前步骤结束后退出）';
+      el.runStatus.className = 'muted small warn';
+    }
+    try {
+      await runnerFetchJson(RUNNER_API.runStop, { method: 'POST', body: {} });
+      // 收到 stopping:true 后继续轮询；没有 timer（例如页面刚恢复）时补一个。
+      if (runPollTimer === null) scheduleRunnerRunPoll(RUNNER_RUN_POLL_MS);
+      setPageStatus('已请求停止，等待当前步骤结束…', 'warn');
+    } catch (e) {
+      runStopping = false;
+      if (el.runStop) {
+        el.runStop.disabled = !runBusy;
+        el.runStop.textContent = runnerRunStopButtonText(false);
+      }
+      const detail = runnerErrorText(e);
+      if (e && e.status === 409) {
+        // 没有在跑（刚结束）或没有 cancel token：不是可重试的停止失败，
+        // 拉一次状态让 UI 收敛；按钮保持可用。
+        if (el.runStatus) {
+          el.runStatus.textContent = '未停止：当前没有可停止的运行（刷新状态中）';
+          el.runStatus.className = 'muted small warn';
+        }
+      } else {
+        if (el.runError) el.runError.textContent = runnerErrorLines(e).join('\n');
+        if (el.runStatus) {
+          el.runStatus.textContent = '停止失败（可重试）：' + detail;
+          el.runStatus.className = 'muted small err';
+        }
+      }
+      if (runPollTimer === null) scheduleRunnerRunPoll(RUNNER_RUN_POLL_MS);
+    }
+  }
+
   async function submitRunnerRun() {
     if (runBusy) return;
     const parsed = runnerRunBody(
@@ -5858,6 +5925,7 @@ function resetTaskChecks(mode) {
       }
       return;
     }
+    runStopping = false;
     setRunBusy(true);
     if (el.runError) el.runError.textContent = '';
     if (el.runLog) el.runLog.textContent = '';
@@ -6265,6 +6333,7 @@ function resetTaskChecks(mode) {
     if (el.schedStop) el.schedStop.addEventListener('click', function () { stopRunnerScheduler(); });
     if (el.schedRefresh) el.schedRefresh.addEventListener('click', function () { refreshCurrentPage(); });
     if (el.runSubmit) el.runSubmit.addEventListener('click', function () { submitRunnerRun(); });
+    if (el.runStop) el.runStop.addEventListener('click', function () { stopRunnerRun(); });
     if (el.overviewGotoQueue) {
       el.overviewGotoQueue.addEventListener('click', function () {
         showPage('queue');
@@ -6310,6 +6379,9 @@ function resetTaskChecks(mode) {
   function init() {
     bindElements();
     bindEvents();
+    // seq196：默认没有运行 → 停止按钮禁用；若刷新时确有运行，run status 轮询
+    // 会立刻把按钮恢复为可用（resumeRunnerRunPolling）。
+    setRunBusy(false);
     showPage(pageFromHash() || 'overview');
     setPageStatus('连接中…');
     refreshCurrentPage();
