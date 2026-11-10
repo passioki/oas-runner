@@ -22,4 +22,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "6e2ec41f860e9116124254cf34c1db7b126d8d7c", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "ebfe1e13feb71808ebb74db000c7f46004f4d663", features = ["ocr"] }
