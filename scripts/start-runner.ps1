@@ -1,16 +1,16 @@
-# oas-runner one-click launcher
+﻿# Runner 一键启动（oas-runner）
 #
-# Starts the packaged Runner (dist/stage-runner) in the background, verifies
-# /runner/health, and opens the Runner UI. This script is source-tree tooling;
-# end users should normally use the start-runner.bat inside a release package.
+# 后台启动已打包的 Runner（dist/stage-runner），校验
+# /runner/health，并打开 Runner UI。本脚本是源码树工具；
+# 终端用户通常应使用发布包内的 start-runner.bat。
 #
-# Usage:
+# 用法：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start-runner.ps1
 #   powershell ... -File scripts\start-runner.ps1 -Port 8799 -NoOpen
 #   powershell ... -File scripts\start-runner.ps1 -DryRun
 #   powershell ... -File scripts\start-runner.ps1 -StageDir D:\some\runner-package
 #
-# Exit codes: 0 started/already running, 1 usage/preflight/startup failure.
+# 退出码：0 已启动/已在运行，1 用法/预检/启动失败。
 
 [CmdletBinding()]
 param(
@@ -38,7 +38,7 @@ function Get-ListenerPid([int]$ListenPort) {
             Select-Object -First 1
         if ($conn) { return [int]$conn.OwningProcess }
     } catch {
-        # Fall back to netstat on Windows versions without Get-NetTCPConnection.
+        # Windows 版本没有 Get-NetTCPConnection 时回退到 netstat。
         $line = & netstat -ano 2>$null | Select-String -Pattern "TCP\s+\S+:$ListenPort\s+\S+\s+LISTENING\s+(\d+)" |
             Select-Object -First 1
         if ($line -and $line.Matches.Count -gt 0) { return [int]$line.Matches[0].Groups[1].Value }
@@ -68,21 +68,21 @@ if ($Stop) {
     $pidFile = Join-Path $StageDir 'logs\runner.pid'
     $listener = Get-ListenerPid $Port
     if (-not $listener) {
-        Write-Step "Runner is not listening on port $Port."
+        Write-Step "Runner 未在端口 $Port 监听。"
         exit 0
     }
     $proc = Get-Process -Id $listener -ErrorAction SilentlyContinue
     if (-not $proc) {
-        Fail "Port $Port is owned by PID $listener, but the process is not accessible."
+        Fail "端口 $Port 被 PID $listener 占用，但进程不可访问。"
     }
     try {
         Stop-Process -Id $listener -Force
         Start-Sleep -Milliseconds 500
         if ($pidFile -and (Test-Path -LiteralPath $pidFile)) { Remove-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue }
-        Write-Step "Stopped Runner PID $listener on port $Port."
+        Write-Step "已停止端口 $Port 上的 Runner（PID $listener）。"
         exit 0
     } catch {
-        Fail "Could not stop Runner PID $listener`: $($_.Exception.Message)"
+        Fail "无法停止 Runner（PID $listener）：$($_.Exception.Message)"
     }
 }
 
@@ -95,25 +95,25 @@ $stdoutLog = Join-Path $logsDir 'runner.out.log'
 $stderrLog = Join-Path $logsDir 'runner.err.log'
 $pidFile = Join-Path $logsDir 'runner.pid'
 
-Write-Step "Repository : $repoRoot"
-Write-Step "Stage      : $StageDir"
-Write-Step "Port       : $Port"
+Write-Step "仓库   ：$repoRoot"
+Write-Step "Stage  ：$StageDir"
+Write-Step "端口   ：$Port"
 
 if ($DryRun) {
-    Write-Step "DRY RUN: no files are created and no process is started."
-    Write-Step "Executable : $exe"
-    Write-Step "UI dir     : $uiDir"
-    Write-Step "Config     : $config"
-    Write-Step "Logs       : $stdoutLog / $stderrLog"
-    if (-not (Test-Path -LiteralPath $exe)) { Fail "oasd-runner.exe is missing; run scripts\package-runner.ps1 first." }
+    Write-Step "DRY RUN：不创建文件、不启动进程。"
+    Write-Step "可执行文件：$exe"
+    Write-Step "UI 目录   ：$uiDir"
+    Write-Step "配置      ：$config"
+    Write-Step "日志      ：$stdoutLog / $stderrLog"
+    Fail "缺少 oasd-runner.exe；请先运行 scripts\package-runner.ps1。"
     exit 0
 }
 
 if (-not (Test-Path -LiteralPath $exe)) {
-    Fail "oasd-runner.exe not found: $exe`nBuild/package it first: scripts\package-runner.ps1 -DataFrom <oas-core> -ToolkitFrom <toolkit>"
+    Fail "未找到 oasd-runner.exe：$exe`n请先构建/打包：scripts\package-runner.ps1 -DataFrom <oas-core> -ToolkitFrom <toolkit>"
 }
 if (-not (Test-Path -LiteralPath $uiDir)) {
-    Fail "Runner ui directory not found: $uiDir"
+    Fail "未找到 Runner UI 目录：$uiDir"
 }
 foreach ($d in @('logs', 'runs', 'packages', 'tasks', 'assets', 'config')) {
     $path = Join-Path $StageDir $d
@@ -124,20 +124,20 @@ foreach ($d in @('logs', 'runs', 'packages', 'tasks', 'assets', 'config')) {
 if (-not (Test-Path -LiteralPath $config)) {
     if (Test-Path -LiteralPath $configExample) {
         Copy-Item -LiteralPath $configExample -Destination $config -Force
-        Write-Step "Created config\live.json from live.example.json; edit device.serial / adb_path before first use."
+        Write-Step "已从 live.example.json 创建 config\live.json；首次使用前请修改 device.serial / adb_path。"
     } else {
-        Fail "Neither config\live.json nor config\live.example.json exists in $StageDir"
+        Fail "$StageDir 中既没有 config\live.json，也没有 config\live.example.json"
     }
 }
 
 $listener = Get-ListenerPid $Port
 if ($listener) {
     if (Test-RunnerHealth $Port) {
-        Write-Step "Runner is already running on http://127.0.0.1:$Port/ (PID $listener)."
+        Write-Step "Runner 已在 http://127.0.0.1:$Port/ 运行（PID $listener）。"
         if (-not $NoOpen) { Start-Process "http://127.0.0.1:$Port/" | Out-Null }
         exit 0
     }
-    Fail "Port $Port is already in use by PID $listener, but /runner/health is not responding. `nRun this script with -Stop first, or stop the other process."
+    Fail "端口 $Port 已被 PID $listener 占用，但 /runner/health 无响应。`n请先带 -Stop 运行本脚本，或停止占用的进程。"
 }
 
 $runnerArgs = @(
@@ -151,12 +151,12 @@ $runnerArgs = @(
     '--config', 'config\live.json'
 )
 
-Write-Step "Starting oasd-runner.exe ..."
+Write-Step "正在启动 oasd-runner.exe ..."
 $proc = Start-Process -FilePath $exe -ArgumentList $runnerArgs -WorkingDirectory $StageDir `
     -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog -PassThru -WindowStyle Hidden
 try {
     [System.IO.File]::WriteAllText($pidFile, "$($proc.Id)`r`n")
-} catch { /* pid file is diagnostic only */ }
+} catch { /* pid 文件仅用于诊断 */ }
 
 $deadline = (Get-Date).AddSeconds(30)
 $healthy = $false
@@ -171,10 +171,10 @@ if (-not $healthy) {
         try { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue } catch { }
     }
     Write-Host ''
-    Write-Host '[OAS] Runner did not become healthy on /runner/health.' -ForegroundColor Red
-    Write-Host "[OAS] stdout: $stdoutLog"
-    Write-Host "[OAS] stderr: $stderrLog"
-    Write-Host '[OAS] Last stderr lines:'
+    Write-Host '[OAS] Runner 未在 /runner/health 上就绪。' -ForegroundColor Red
+    Write-Host "[OAS] stdout：$stdoutLog"
+    Write-Host "[OAS] stderr：$stderrLog"
+    Write-Host '[OAS] stderr 最后几行：'
     if (Test-Path -LiteralPath $stderrLog) {
         Get-Content -LiteralPath $stderrLog -Tail 20 -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Host "  $_" }
@@ -182,10 +182,10 @@ if (-not $healthy) {
     exit 1
 }
 
-Write-Step "Runner started: http://127.0.0.1:$Port/ (PID $($proc.Id))"
-Write-Step "Config : $config"
-Write-Step "Logs   : $stdoutLog"
-Write-Step "Stop   : scripts\start-runner.ps1 -Stop"
+Write-Step "Runner 已启动：http://127.0.0.1:$Port/（PID $($proc.Id)）"
+Write-Step "配置 ：$config"
+Write-Step "日志 ：$stdoutLog"
+Write-Step "停止 ：scripts\start-runner.ps1 -Stop"
 if (-not $NoOpen) {
     Start-Process "http://127.0.0.1:$Port/" | Out-Null
 }

@@ -1,4 +1,4 @@
-/* OAS engine editor - minimal tool UI */
+/* OAS 引擎编辑器 - 最小工具界面 */
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
@@ -30,7 +30,7 @@ button {
 }
 button:disabled { background: #3a3f4a; color: #8a8f99; cursor: default; }
 button:hover:not(:disabled) { background: #3182ce; }
-/* v1.2.4: asset-test dry-run / real-click switch (header, next to live preview). */
+/* v1.2.4：素材测试 dry-run / 真实点击切换（顶部，实时预览旁）。 */
 #btn-test-mode { flex: none; font-size: 12px; padding: 5px 10px; }
 #btn-test-mode.test-dry { background: #2f6f5e; }
 #btn-test-mode.test-dry:hover:not(:disabled) { background: #37836f; }
@@ -137,7 +137,7 @@ pre {
 }
 .clicks-legend .cross::after { transform: rotate(90deg); }
 
-/* 22.18 visual flow editor */
+/* 22.18 可视化流程编辑器 */
 .flow-steps {
   margin: 6px 0 10px;
   display: flex;
@@ -183,7 +183,7 @@ pre {
   font-size: 12px;
 }
 
-/* 22.22 asset library toolbar */
+/* 22.22 素材库工具栏 */
 .lib-toolbar {
   flex-wrap: wrap;
   align-items: center;
@@ -216,7 +216,7 @@ pre {
   white-space: pre-wrap;
 }
 
-/* v1.2.3 UX: keep the workbench canvas in view; only the right rail scrolls. */
+/* v1.2.3 UX：让工作台画布保持可见；仅右侧栏滚动。 */
 #page-workbench { flex: 1 1 auto; min-height: 0; }
 #page-workbench.active { display: flex; }
 #page-workbench > main {
@@ -224,8 +224,8 @@ pre {
   min-height: 0;
   overflow: hidden;
 }
-/* v0.1 editor layout: the canvas gets its own fitted 16:9 stage; result/log
-   live below it and are collapsed by default so they never cover the picture. */
+/* v0.1 编辑器布局：画布使用独立适配的 16:9 舞台；结果/日志
+   位于其下，默认折叠，避免遮挡画面。 */
 #canvas-wrap {
   flex: 1 1 auto;
   min-height: 0;
@@ -355,7 +355,7 @@ aside.side {
   max-height: 260px;
   overflow: auto;
 }
-/* Frame manager: use the rail's full vertical height (not full page width). */
+/* 帧管理器：使用右栏完整垂直高度（非整页宽度）。 */
 #panel-images.active {
   display: flex;
   flex-direction: column;
@@ -363,16 +363,16 @@ aside.side {
   min-height: 420px;
 }
 #panel-images .frames-list {
-  /* Keep the category-grouped frame list visible: the fixed content added above
-     (search box, category controls, frame detail/assets) used to squeeze this
-     flex item to 0 height, which made the whole frame region disappear. */
+  /* 保持按分类分组的帧列表可见：上方固定内容
+     （搜索框、分类控件、帧详情/素材）曾把
+     此 flex 项压成 0 高度，导致整个帧区域消失。 */
   flex: 1 1 auto;
   max-height: none;
   min-height: 200px;
   overflow-y: auto;
 }
-/* Frame detail / per-frame asset library: collapsed by default so it cannot
-   steal the height the frame list needs; selectFrame() opens it on demand. */
+/* 帧详情 / 每帧素材库：默认折叠，避免占用帧列表所需高度；
+   selectFrame() 按需展开。 */
 #frame-details {
   flex: 0 0 auto;
   margin: 6px 0;
@@ -461,9 +461,9 @@ aside.side {
 }
 .asset-row {
   display: flex;
-  /* The settings menu is an inline second line (flex-basis:100%), never an
-     absolutely positioned popover: .asset-list is overflow:auto and would clip
-     a popover at the bottom of the list. */
+  /* 设置菜单是内联第二行（flex-basis:100%），不是
+     绝对定位弹层：.asset-list 为 overflow:auto，会在列表底部
+     裁剪弹层。 */
   flex-wrap: wrap;
   gap: 4px;
   align-items: stretch;
@@ -487,10 +487,10 @@ aside.side {
   line-height: 16px;
   white-space: nowrap;
 }
-/* A: the selected asset row. Loud on purpose (left rail + background + text):
-   设置 stays open while the row is edited, so it must always be obvious WHICH
-   asset those settings belong to. Dark-theme safe, no layout shift (inset
-   shadow instead of a real border). */
+/* A：选中的素材行。刻意醒目（左栏 + 背景 + 文字）：
+   编辑该行时“设置”保持展开，必须始终能看出设置属于哪个素材。
+   深色主题安全、无布局抖动（用内阴影
+   代替真实边框）。 */
 .asset-row.selected {
   background: #1b2a3a;
   box-shadow: inset 3px 0 0 #4d9fff;
@@ -507,10 +507,10 @@ aside.side {
 }
 .asset-row .asset-main {
   flex: 1;
-  /* A flex item's default min-width:auto refuses to shrink below its content's
-     min-content width; at the 320px sidebar that pushed 设置 onto a second line
-     and stretched 识别 into a tall block. Let the text column shrink so both
-     52px actions always stay on the first row. */
+  /* flex 项默认 min-width:auto 不会收缩到内容
+     min-content 宽度以下；320px 侧栏下会把“设置”挤到第二行、
+     把“识别”拉成高块。让文本列可收缩，使两个 52px 操作
+     始终留在第一行。 */
   min-width: 0;
   margin: 0;
   padding: 4px 8px;
@@ -580,9 +580,9 @@ aside.side {
 .asset-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .asset-row .asset-test {
   flex: 0 0 52px;
-  /* Keep the two actions as compact chips rather than stretching them to the
-     full height of a multi-line asset label (the row itself still stretches so
-     the inline menu keeps its own line). */
+  /* 两个操作保持紧凑小按钮，不拉伸到多行素材标签的
+     整个高度（行本身仍拉伸，
+     内联菜单保持独立一行）。 */
   align-self: flex-start;
   margin: 0;
   padding: 4px 0;
@@ -602,8 +602,8 @@ aside.side {
 }
 .asset-row-menu.open { display: flex; }
 .asset-menu-item {
-  /* Neutralize the sidebar-wide `aside button { display:block; width:100%;
-     margin-bottom:8px }`: menu items must stay content-sized inline buttons. */
+  /* 抵消侧栏全局 `aside button { display:block; width:100%;
+     margin-bottom:8px }`：菜单项必须保持内容大小的内联按钮。 */
   display: block;
   flex: 0 0 auto;
   width: auto;
@@ -765,7 +765,7 @@ aside.side {
 .dialog-actions { margin-top: 4px; }
 .dialog-actions button { flex: 1; }
 
-/* v1.1: inline multi-line OCR actions */
+/* v1.1：内联多行 OCR 动作 */
 .ocr-line-row {
   display: flex;
   align-items: center;
@@ -785,7 +785,7 @@ aside.side {
   font-size: 11px;
   padding: 2px 6px;
 }
-/* v1.1 P3: app shell pages */
+/* v1.1 P3：应用外壳页面 */
 .app-nav {
   display: flex;
   align-items: center;
@@ -827,7 +827,7 @@ aside.side {
 .task-card .task-sub { color: #98a0ac; font-size: 12px; }
 .task-card .row { width: auto; }.page-head button { width: auto; margin: 0; display: inline-block; flex: none; }
 .page-head .spacer { flex: 1; }
-/* v1.2 multi-select save candidates */
+/* v1.2 多选保存候选 */
 .candidate-head { display: flex; gap: 6px; align-items: center; }
 .candidate-head input[type="checkbox"] { flex: none; width: auto; margin: 0; }
 .candidate-name { flex: 1; min-width: 0; font-size: 12px; padding: 2px 4px; }
@@ -848,9 +848,9 @@ aside.side {
   gap: 10px;
   align-items: start;
 }
-/* The global `aside { width:320px; flex:0 0 320px }` must NOT size builder
-   grid items: it made the 220px palette wider than its track and overlap the
-   center column. Let the grid tracks control the width. */
+/* 全局 `aside { width:320px; flex:0 0 320px }` 不得决定 builder
+   网格项尺寸：它会让 220px 素材面板宽于轨道并覆盖
+   中间列。让网格轨道控制宽度。 */
 .builder-main > .builder-palette,
 .builder-main > .builder-inspector { width: auto; flex: none; }
 .builder-splitter {
@@ -896,7 +896,7 @@ aside.side {
 .builder-form-actions { margin-top: 10px; display: flex; gap: 6px; }
 .builder-form-actions button { width: auto; flex: none; margin: 0; }
 .builder-assets { margin-top: 12px; border-top: 1px solid #2b2f38; padding-top: 8px; }
-/* v1.2.1 real control-flow graph */
+/* v1.2.1 真实控制流图 */
 .flowgraph { display: flex; flex-direction: column; align-items: stretch; padding: 4px 2px; }
 .fg-terminator { align-self: center; border: 1px solid #5d7fa5; border-radius: 16px; padding: 2px 16px; background: #1b2b3a; font-size: 12px; color: #cfe4ff; }
 .fg-terminator.end { background: #2a2118; border-color: #8a6a2a; color: #ffd54a; }
@@ -1028,19 +1028,19 @@ aside.side {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* v1.2.1 frame gallery rename/group/drag */
+/* v1.2.1 帧库重命名/分组/拖拽 */
 .frame-group { margin: 6px 0; border-top: 1px solid #2b2f38; padding-top: 4px; }
 .frame-group-head { color: #98a0ac; font-size: 12px; padding: 2px 4px; user-select: none; }
 .frame-row.dragging { opacity: 0.45; }
 .frame-row[draggable="true"] { cursor: grab; }
 
-/* v1.2.2 N47: builder structured sub-forms */
+/* v1.2.2 N47：构建器结构化子表单 */
 .builder-subform { border: 1px solid #2b2f38; border-radius: 6px; padding: 6px; margin: 6px 0; }
 .builder-subform label { display: block; margin: 4px 0; }
 .builder-inline { display: flex; gap: 6px; flex-wrap: wrap; }
 .builder-inline label { flex: 1 1 80px; }
 
-/* Unified capture metadata + new-frame markers */
+/* 统一捕获元数据 + 新帧标记 */
 .category-filter-host { display: block; }
 .category-filter-host .asset-search-picker { display: block; }
 .filter-new-badge {

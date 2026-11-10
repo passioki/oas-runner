@@ -8,19 +8,19 @@
   const RUNNER_FETCH_TIMEOUT_MS = 8000;
   const RUNNER_RUNS_LIMIT = 100;
   const RUNNER_RECENT_LIMIT = 5;
-  // PR6: queue-page scheduler status poll + temp-run result poll.
+  // PR6：队列页调度状态轮询 + 临时运行结果轮询。
   const RUNNER_SCHED_POLL_MS = 5000;
   const RUNNER_RUN_POLL_MS = 500;
   // seq151：60s 不是失败阈值，只是历史提示线；轮询指数退避到 2s 并持续到
   // running=false。seq196：运行中可随时点「停止运行」（后端在步骤边界退出）。
   const RUNNER_RUN_POLL_MAX_DELAY_MS = 2000;
   const RUNNER_RUN_ELAPSED_WARN_MS = 60000;
-  // P0-1a: Studio publish notifications (exchange) are polled while the page is
-  // visible; hidden tabs pause the timer (see visibilitychange in init()).
+  // P0-1a：页面可见时轮询 Studio 发布通知（exchange）；
+  // 页面隐藏时暂停计时器（见 init() 中的 visibilitychange 处理）。
   const RUNNER_UPDATES_POLL_MS = 5000;
   const RUNNER_RUN_LOG_TAIL = 20;
-  // POST /runner/scheduler/stop answers within 3 s (`timeout:true` while a long
-  // attempt finishes). The UI then polls the scheduler status itself: 1 s tick,
+  // POST /runner/scheduler/stop 在 3 秒内应答（长尝试收尾时返回 `timeout:true`）；
+  // UI 随后自行轮询调度状态：1 秒一次，30 秒预算，
   // 30 s budget, so a long attempt is shown as "停止中" instead of "停止失败".
   const RUNNER_STOP_POLL_MS = 1000;
   const RUNNER_STOP_POLL_MAX_MS = 30000;
@@ -82,7 +82,7 @@
   let configParams = [];
   let configLoaded = false;
   let configBusy = false;
-  // P2: saved values of the open task (drives use-switch defaults + hints).
+  // P2：当前打开任务的已保存值（决定使用开关默认值与提示）。
   let configValues = {};
 
   // PR5: 安装/卸载/回滚是串行操作；期间禁用安装按钮并拒绝重复提交。
@@ -92,8 +92,8 @@
   let updatesBusy = false;
   let updatesPollTimer = null;
 
-  // PR6: scheduler start/stop, temp run and scheduler.json saves are serial
-  // operations; the timers are the only long-lived state.
+  // PR6：调度启动/停止、临时运行与 scheduler.json 保存均为串行操作；
+  // 计时器是唯一长期存在的状态。
   let schedBusy = false;
   let schedStopping = false;
   let runBusy = false;
@@ -321,8 +321,8 @@
     const p = param && typeof param === 'object' ? param : {};
     const type = String(p.type === undefined || p.type === null ? '' : p.type).trim().toLowerCase();
     if (type === 'bool' || type === 'boolean') return 'bool';
-    // P2: enum also wins for numeric types (fixes "number input + hint" UI); the
-    // server still validates membership.
+    // P2：数值类型同样优先按枚举处理（修复“数字输入 + 提示”界面）；
+    // 成员合法性仍由服务端校验。
     if (Array.isArray(p.enum) && p.enum.length) return 'select';
     if (type === 'int' || type === 'integer' || type === 'float' || type === 'number') {
       return 'number';
@@ -348,9 +348,9 @@
     return runnerConfigFieldKind(p) === 'bool' ? false : '';
   }
 
-  // fieldValues holds raw control strings. The optional `useFlags` map is the
+  // fieldValues 保存控件原始字符串。可选的 `useFlags` 映射记录
   // P2 per-key「使用」switch: false = 不注入（回退 default）。Missing useFlags keeps
-  // the v1 behavior (every provided field is submitted).
+  // 保持 v1 行为（每个已提供字段都会提交）。
   function runnerConfigCollectValues(params, fieldValues, useFlags) {
     const list = Array.isArray(params) ? params : [];
     const fields = fieldValues && typeof fieldValues === 'object' ? fieldValues : {};
@@ -397,10 +397,10 @@
             errors.push('「' + label + '」必须是整数');
             continue;
           }
-          // min/max/enum are authoritative on the server: send the value and
-          // let a 400 name the key + range/options (the dialog renders every
-          // server error line verbatim). Local checks stay limited to
-          // conversion so the UI never hides the real API contract.
+          // min/max/enum 以服务端为准：直接提交值，
+          // 由 400 错误指出字段名 + 范围/选项（对话框逐行
+          // 原样展示服务端错误）。本地检查仅限
+          // 类型转换，不让 UI 掩盖真实 API 契约。
           value = num;
         }
       } else {
@@ -409,9 +409,9 @@
           present = false;
         } else {
           const options = Array.isArray(param.enum) ? param.enum.map(String) : [];
-          // P2: a numeric enum now renders a select; keep the JSON number type so
-          // the server schema (type=int/number) still accepts the value. Numeric
-          // enum membership stays server-authoritative (no local 400 pre-empt).
+          // P2：数值枚举改用下拉框；保持 JSON 数字类型，
+          // 以便服务端 schema（type=int/number）仍接受该值。数值
+          // 枚举成员合法性仍由服务端判定（本地不提前拦截 400）。
           const paramType = String(param.type === undefined || param.type === null ? '' : param.type)
             .trim()
             .toLowerCase();
@@ -476,8 +476,8 @@
   // UI 全名；行内短标「识别文字配置」）；旧任务 role=ocr_text 但无 asset_id 的行
   // 仍按自己的 group 分节（兼容，不破坏旧行为）。
 
-  // Full grouping model: one leading ocr_var section + the regular group sections.
-  // `kind` lets the renderer/tests tell the two apart without string matching.
+  // 完整分组模型：一个前置 ocr_var 分区 + 常规分组分区。
+  // `kind` 让渲染/测试无需字符串匹配即可区分两者。
   function runnerParamGroupsEx(params) {
     const list = Array.isArray(params) ? params : [];
     const groups = [];
@@ -503,7 +503,7 @@
     return derived.params.length ? [derived].concat(groups) : groups;
   }
 
-  // Backwards-compatible view used by the summary/collector/renderer.
+  // 供汇总/收集器/渲染器使用的向后兼容视图。
   function runnerParamGroups(params) {
     return runnerParamGroupsEx(params).map(function (group) {
       return { group: group.group, params: group.params };
@@ -610,7 +610,7 @@
     return type || '文本';
   }
 
-  // Saved values only (never the declared default): the dialog shows defaults as
+  // 仅已保存值（永不使用声明默认值）：对话框将默认值显示为
   // hints, not as pre-filled values, so 留空 really means "不注入".
   function runnerParamSavedValue(param, values) {
     const p = param && typeof param === 'object' ? param : {};
@@ -631,7 +631,7 @@
   }
 
   // One row's state machine: used = 使用 switch; value = control raw string.
-  // blocked = required && no default && (not used / left blank) -> save refused.
+  // blocked = 必填 && 无默认值 &&（未启用/留空）-> 拒绝保存。
   function runnerParamUseState(param, rawValue, useFlag) {
     const p = param && typeof param === 'object' ? param : {};
     const kind = runnerConfigFieldKind(p);
@@ -666,8 +666,8 @@
     };
   }
 
-  // Save-time collection: uses the extended collector (useFlags + tri bool) and
-  // adds page counters for the top summary.
+  // 保存时收集：使用扩展收集器（useFlags + 三态 bool），
+  // 并为顶部汇总增加页面计数。
   function runnerParamCollectUse(params, useFlags, rawValues) {
     const collected = runnerConfigCollectValues(params, rawValues, useFlags);
     const groups = runnerParamGroups(params);
@@ -710,16 +710,16 @@
   // 安装、卸载与回滚都走 Runner-only 路由；这里只拼请求体、格式化和把服务端
   // 错误码翻成可执行的一句话。不依赖 DOM。
 
-  // POST /runner/install body. The path is shown/trimmed as typed: the Runner
-  // is a local surface, so no drive-letter rewriting or platform guessing.
+  // POST /runner/install 请求体。路径按输入原样展示/去空格：Runner
+  // 是本地界面，不做盘符改写或平台猜测。
   function runnerInstallBody(path, force) {
     const text = String(path === undefined || path === null ? '' : path).trim();
     return { path: text, force: force === true };
   }
 
-  // Normalized display row for one installed package. Missing fields render
-  // '—' instead of "undefined"; sha is shortened only for display (title keeps
-  // the full value).
+  // 单个已安装包的标准展示行。缺失字段显示为
+  // '—' 而非 "undefined"；sha 仅展示时缩短（title 保留
+  // 完整值）。
   function formatPackageRow(pkg) {
     const p = pkg && typeof pkg === 'object' ? pkg : {};
     const text = (v) => (v === undefined || v === null || v === '' ? '' : String(v));
@@ -742,7 +742,7 @@
   }
 
   // 「已安装任务」行里的包信息徽标：已安装 vN / 未纳管。When the backend does
-  // not return installed/version/package_id/unmanaged at all, stay neutral.
+  // 完全未返回 installed/version/package_id/unmanaged 时保持中性。
   function runnerTaskPackageBadge(task) {
     const t = task && typeof task === 'object' ? task : {};
     const version = t.version === undefined || t.version === null || t.version === ''
@@ -768,8 +768,8 @@
     return { text: '—', cls: 'kind', title: '任务列表未返回包信息' };
   }
 
-  // Map the Runner install/uninstall errors to one actionable Chinese line
-  // (details stay server-authoritative; this only explains the common codes).
+  // 将 Runner 安装/卸载错误映射为一行可执行的中文提示
+  // （详情仍以服务端为准；这里只解释常见错误码）。
   function runnerPackagesErrorText(err) {
     let raw;
     if (err === undefined || err === null) raw = '';
@@ -816,8 +816,8 @@
   // （未启用 / 未知兼容性 / 允许安装），不让安装包页因此报错。这里只做
   // 「数据 → 文案/布尔」的纯转换：不碰 DOM，也不发请求。
 
-  // `enabled` missing means an older backend did not implement exchange -> treat
-  // it as "not configured" (the task contract).
+  // `enabled` 缺失表示旧后端未实现 exchange -> 视为
+  // “未配置”（任务契约）。
   function updatesEnabled(body) {
     const b = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
     return b.enabled === true;
@@ -828,7 +828,7 @@
     return Array.isArray(b.updates) ? b.updates : [];
   }
 
-  // Only events that still need a decision are actionable: dismissed/installed
+  // 仅仍需决策的事件可操作：dismissed/installed
   // rows are hidden ("不再打扰") and an event without event_id cannot be acked.
   function updatesVisibleRows(list) {
     const rows = Array.isArray(list) ? list : [];
@@ -901,8 +901,8 @@
     return '';
   }
 
-  // POST /runner/updates/install body: the event id is enough for the backend to
-  // resolve the source, download (when needed), install and ack installed.
+  // POST /runner/updates/install 请求体：只需事件 id，后端即可
+  // 解析来源、按需下载、安装并回执 installed。
   function updatesInstallBody(eventId) {
     const id = String(eventId === undefined || eventId === null ? '' : eventId).trim();
     return { event_id: id };
@@ -917,9 +917,9 @@
     return kind === 'url';
   }
 
-  // The new install endpoint needs only event_id (and a compatible package); a
-  // local event whose package file vanished is not installable, while a remote
-  // event is (the backend downloads it).
+  // 新安装接口只需 event_id（以及兼容的包）；
+  // 本地事件若包文件已消失则不可安装，而远程
+  // 事件仍可安装（后端负责下载）。
   function updatesCanInstall(item) {
     const it = item && typeof item === 'object' && !Array.isArray(item) ? item : {};
     const eventId = it.event_id === undefined || it.event_id === null
@@ -958,8 +958,8 @@
     return parts.join(' · ');
   }
 
-  // POST /runner/updates/ack body. Only the two documented statuses travel; a
-  // blank/unknown status degrades to "dismissed" so the badge can always clear.
+  // POST /runner/updates/ack 请求体。只传两种已记录状态；
+  // 空/未知状态降级为 "dismissed"，确保角标总能清除。
   function updatesAckBody(ids, status) {
     const list = Array.isArray(ids) ? ids : [];
     const eventIds = list
@@ -974,7 +974,7 @@
   }
 
   // One status line for the 新发布 card: read error (fail-soft) > server index
-  // error > exchange disabled > empty > count.
+  // 错误 > exchange 已禁用 > 空 > 数量。
   function updatesListStatusText(body, errorText) {
     const b = body && typeof body === 'object' && !Array.isArray(body) ? body : null;
     const err = String(errorText === undefined || errorText === null ? '' : errorText).trim();
@@ -984,8 +984,8 @@
       ? ''
       : String(b.error).trim();
     if (serverError) return '发布索引读取异常：' + serverError;
-    // P2: feed events can exist even while the local exchange is disabled, so
-    // actionable rows win over the exchange-disabled hint.
+    // P2：本地 exchange 禁用时 feed 事件仍可能存在，因此
+    // 可操作行优先于“exchange 已禁用”提示。
     const rows = updatesVisibleRows(updatesList(b));
     if (rows.length) return '新发布 ' + rows.length + ' 条（安装或忽略后不再显示）';
     if (!updatesEnabled(b)) {
@@ -997,10 +997,10 @@
   // --- PR6: 调度启停 / 临时运行 / scheduler.json（纯函数，ui_pure_test 单独抽取）
   // 只做「请求体 + 文案」的纯转换：不碰 DOM，也不直接发请求。
 
-  // POST /runner/run body. The task is required; the params textarea is
-  // optional. Empty text and `{}` mean "use the Runner's saved values"
-  // (config/values.json); any key overrides a saved value. Anything that is not
-  // a JSON object is rejected locally, before a request is sent.
+  // POST /runner/run 请求体。task 必填；参数文本域
+  // 可选。空文本或 `{}` 表示“使用 Runner 已保存值”
+  // （config/values.json）；任一键覆盖已保存值。非
+  // JSON 对象会在本地拒绝，不发送请求。
   function runnerRunBody(task, paramsText) {
     const name = String(task === undefined || task === null ? '' : task).trim();
     if (!name) return { ok: false, body: null, error: '请选择要运行的任务' };
@@ -1028,7 +1028,7 @@
     return { ok: true, body: body, error: '' };
   }
 
-  // One sentence for GET /runner/run/status (running / finished / failed).
+  // GET /runner/run/status 的一句话状态（running / finished / failed）。
   function runnerRunElapsedMs(startedMs, nowMs) {
     const started = Number(startedMs) || 0;
     if (!started) return 0;
@@ -1072,7 +1072,7 @@
       '（可点「停止运行」停止；停止在当前步骤结束后生效）';
   }
 
-  // One sentence for GET /runner/run/status (running / finished / failed).
+  // 同上：GET /runner/run/status 的一句话状态（running / finished / failed）。
   function runnerRunStatusText(status) {
     const s = status && typeof status === 'object' ? status : {};
     const task = s.task === undefined || s.task === null || s.task === '' ? '' : String(s.task);
@@ -1098,8 +1098,8 @@
     return '已停止';
   }
 
-  // The scheduling lock is a cross-process file lock; its pid is the one piece
-  // of info that explains "who is running" (Runner thread vs `oasd scheduler`).
+  // 调度锁是跨进程文件锁；其 pid 是
+  // 解释“谁在运行”的唯一信息（Runner 线程 vs `oasd scheduler`）。
   function runnerSchedLockPidText(status) {
     const s = status && typeof status === 'object' ? status : null;
     if (!s) return '—';
@@ -1114,9 +1114,9 @@
     return s.thread_alive === true ? '存活' : '已退出';
   }
 
-  // POST /scheduler/config body. The textarea holds the raw scheduler.json
-  // document; the server shape is {config: <object>} (same as the old Studio
-  // page contract). The Runner never rewrites the document locally.
+  // POST /scheduler/config 请求体。文本域保存原始 scheduler.json
+  // 文档；服务端形状为 {config: <object>}（与旧 Studio
+  // 页面契约一致）。Runner 不在本地改写该文档。
   function runnerSchedJsonBody(text) {
     const raw = String(text === undefined || text === null ? '' : text).trim();
     if (!raw) return { ok: false, body: null, error: 'JSON 为空：请先载入或粘贴 scheduler.json' };
@@ -1136,8 +1136,8 @@
     return { ok: true, body: { config: parsed }, error: '' };
   }
 
-  // One actionable line per server error (the 409 busy/lease errors arrive in
-  // body.errors; they are shown verbatim, one per line).
+  // 每个服务端错误一行可执行提示（409 busy/lease 错误位于
+  // body.errors，逐行原样展示）。
   function runnerErrorLines(error) {
     if (error && Array.isArray(error.details) && error.details.length) {
       return error.details.map(function (line) { return '· ' + String(line); });
@@ -1147,10 +1147,10 @@
 
   // --- HTTP：所有请求的唯一入口 ------------------------------------------------
 
-  // Human label for the machine-readable 409 codes. The backend sends
+  // 机器可读 409 错误码的人类可读标签。后端发送
   // `{ok:false,error:"device_busy"|"scheduler_locked"|"run_busy",errors:[...],
-  // message:"..."}`; the summary must keep the code meaning instead of
-  // replacing it with the human `errors` line (P1-1).
+  // message:"..."}`；汇总必须保留错误码含义，
+  // 不能用 `errors` 文本替换（P1-1）。
   function runnerErrorCodeLabel(code) {
     switch (String(code === undefined || code === null ? '' : code)) {
       case 'device_busy': return '设备被占用';
@@ -1179,8 +1179,8 @@
     return '';
   }
 
-  // POST /runner/scheduler/stop body -> user-facing text (P1-2). A timeout is a
-  // "still stopping" state, never a failure: the UI polls until running=false.
+  // POST /runner/scheduler/stop 请求体 -> 用户可见文本（P1-2）。超时是
+  // “仍在停止”状态，不是失败：UI 轮询直到 running=false。
   function runnerStopText(body) {
     const b = body && typeof body === 'object' ? body : null;
     if (!b) return '已请求停止（等待调度线程退出）';
@@ -1195,8 +1195,8 @@
     return !!b && (b.timeout === true || b.stopping === true);
   }
 
-  // Scheduler history rows shown only when present (`last_error` / `last_stop`
-  // explain an auto-start failure or the previous stop reason; P2 UI).
+  // 仅在存在时展示调度历史行（`last_error` / `last_stop`
+  // 解释自动启动失败或上次停止原因；P2 UI）。
   function runnerSchedHistoryRows(status) {
     const s = status && typeof status === 'object' ? status : null;
     const rows = [];
@@ -1242,8 +1242,8 @@
       if (!res.ok) {
         const err = new Error('HTTP ' + res.status + (detail ? '：' + detail : ''));
         err.status = res.status;
-        // Keep the machine code (`device_busy` / `scheduler_locked` /
-        // `run_busy`) so callers can branch on it instead of regexing the text.
+        // 保留机器错误码（`device_busy` / `scheduler_locked` /
+        // `run_busy`），便于调用方分支处理而非正则文本。
         if (body && typeof body === 'object' &&
             body.error !== undefined && body.error !== null && body.error !== '') {
           err.code = String(body.error);
@@ -1444,7 +1444,7 @@
 
     el.queueRefresh = document.getElementById('runner-queue-refresh');
     el.queueStatus = document.getElementById('runner-queue-status');
-    // PR6: scheduler control / temp run / advanced scheduler.json editor.
+    // PR6：调度控制 / 临时运行 / 高级 scheduler.json 编辑器。
     el.schedControl = document.getElementById('runner-sched-control');
     el.schedBadge = document.getElementById('runner-sched-badge');
     el.schedMeta = document.getElementById('runner-sched-meta');
@@ -1503,8 +1503,8 @@
       const health = await runnerFetchJson(RUNNER_API.health);
       state.health = health;
       applyHealth(health);
-      // P0-1a: /runner/health may expose pending_updates; use it only as the
-      // badge seed until the authoritative /runner/updates list has loaded.
+      // P0-1a：/runner/health 可能返回 pending_updates；仅作为
+      // 权威 /runner/updates 列表加载前的角标初始值。
       if (!state.updates &&
           health && typeof health.pending_updates === 'number' && isFinite(health.pending_updates)) {
         updateNavBadge(health.pending_updates);
@@ -1862,8 +1862,8 @@
 
   // --- P0-1a: 新发布（Studio → Runner）页面渲染 / 轮询 / 安装+ack ------------
 
-  // Nav badge shows the actionable count; 0 hides it again (installed/dismissed
-  // events never keep the badge on).
+  // 导航角标显示可操作数量；为 0 时隐藏（installed/dismissed
+  // 事件不会让角标常驻）。
   function updateNavBadge(count) {
     if (!el.updatesBadge) return;
     const n = Number(count);
@@ -1926,7 +1926,7 @@
     const it = item && typeof item === 'object' ? item : {};
     const cell = document.createElement('span');
     cell.textContent = updatesCompatText(it);
-    // A downloadable (remote) event has no local package file by design; only
+    // 可下载（远程）事件按设计没有本地包文件；仅
     // local events with a vanished file need the "包文件不存在" hint.
     if (it.package_available === false && !updatesDownloadHint(it)) {
       const hint = document.createElement('span');
@@ -2020,8 +2020,8 @@
       return '';
     } catch (e) {
       const message = runnerErrorText(e);
-      // Fail-soft: keep the last good payload/list on screen; only the status
-      // line explains the read failure.
+      // 软失败：保留上次正常数据/列表；仅由状态
+      // 行提示读取失败。
       renderRunnerUpdates(state.updates, message);
       return '新发布读取失败：' + message;
     }
@@ -2043,10 +2043,10 @@
     }
   }
 
-  // P2: install one publish event through the backend (it resolves the source,
-  // downloads when needed, installs and acks installed). Old backends without
-  // POST /runner/updates/install fall back to the legacy local-path install + ack
-  // when the event still carries package_path.
+  // P2：通过后端安装一条发布事件（后端解析来源、
+  // 按需下载、安装并回执 installed）。旧后端没有
+  // POST /runner/updates/install 时回退到旧本地路径安装 + 回执
+  // （事件仍带 package_path 时）。
   async function installUpdateEvent(item) {
     if (updatesBusy || packagesBusy) return;
     const it = item && typeof item === 'object' ? item : {};
@@ -2077,8 +2077,8 @@
           body: updatesInstallBody(eventId),
         });
       } catch (e) {
-        // Graceful degradation for a backend that has no /runner/updates/install
-        // yet: only a 404 fallback is safe (it means "route not implemented").
+        // 对没有 /runner/updates/install 的后端优雅降级：
+        // 只有 404 才能安全回退（表示“路由未实现”）。
         const legacyPath = updatesInstallPath(it);
         if (!(e && e.status === 404) || !legacyPath) throw e;
         result = await runnerFetchJson(RUNNER_API.install, {
@@ -2090,9 +2090,9 @@
           result = Object.assign({}, result, { ack_error: ackError });
         }
       }
-      // Two response shapes are understood: the P2 install endpoint returns
-      // {installed:{task_id,...}, warning?}, the legacy /runner/install returns
-      // {task_id,...}. Both collapse to one message.
+      // 识别两种响应形状：P2 安装接口返回
+      // {installed:{task_id,...}, warning?}，旧版 /runner/install 返回
+      // {task_id,...}。两者都归一为一条消息。
       const resultObj = result && typeof result === 'object' ? result : {};
       const installed = resultObj.installed && typeof resultObj.installed === 'object'
         ? resultObj.installed
@@ -2143,8 +2143,8 @@
     }
   }
 
-  // The 5s poll runs while the Runner UI is open; a hidden tab pauses it and a
-  // visible tab resumes with one immediate read. Timers never outlive the page.
+  // Runner UI 打开时每 5 秒轮询；页面隐藏时暂停，
+  // 恢复可见时立即读一次。计时器不会超出页面生命周期。
   function stopUpdatesPolling() {
     if (updatesPollTimer !== null) {
       clearInterval(updatesPollTimer);
@@ -2292,7 +2292,7 @@
     return bits.join(' · ');
   }
 
-  // P2: read the current form into {useFlags, rawValues} for save/summary.
+  // P2：读取当前表单为 {useFlags, rawValues}，供保存/汇总使用。
   function readRunnerConfigForm() {
     const useFlags = {};
     const rawValues = {};
@@ -2552,8 +2552,8 @@
     updateRunnerConfigSummary();
   }
 
-  // Map server errors back to their row (400 errors name the key/label). Rows
-  // are highlighted and the message is repeated under the row.
+  // 将服务端错误映射回对应行（400 错误会指出 key/label）。对应行
+  // 高亮，并在行下方重复错误消息。
   function applyRunnerConfigRowErrors(errors) {
     if (!el.configFields) return;
     const rows = el.configFields.querySelectorAll('.runner-config-row');
@@ -2591,7 +2591,7 @@
     try {
       const body = await runnerFetchJson(runnerConfigUrl(task));
       if (configTask !== task) return; // 已关闭/切换到别的任务，丢弃过期响应
-      // V2.0c: new API returns variables; legacy params fallback keeps old runners alive.
+      // V2.0c：新 API 返回 variables；旧 params 回退保证旧 Runner 仍可用。
       const variables = Array.isArray(body.variables) ? body.variables : [];
       const params = variables.length
         ? runnerVariableRows(variables)
@@ -2720,9 +2720,9 @@
   }
 
   // =======================================================================
-  // PR7: legacy Studio scheduler UI, migrated into the Runner #page-queue.
-  // Element ids are kept from the Studio page (84 ids) so the DOM audit maps
-  // 1:1; only HTTP/logging/page-routing/badge/table seams are adapted.
+  // PR7：旧 Studio 调度 UI，已迁入 Runner 的 #page-queue。
+  // 元素 id 保留 Studio 页面（84 个），以便 DOM 审计
+  // 一一对应；仅适配 HTTP/日志/页面路由/角标/表格接缝。
   // =======================================================================
 
   // --- 旧 Studio 调度页元素常量（80 个；id 全部保留） -----------------------
@@ -2892,17 +2892,17 @@
 
   // --- 配置纯函数（77 个，旧 Studio 原样保留） --------------------------------
 // --- P3: 调度配置纯函数（可被 ui_pure_test.js 提取；不碰 DOM） ---------------
-// Everything below is plain data in -> plain data out so the JSON transform /
-// entry builder / queue payload / error-text rules are testable without a
-// browser. UI functions live further down and call these.
+// 以下全部为纯数据进/纯数据出，便于 JSON 转换 /
+// 条目构建 / 队列载荷 / 错误文本规则在无浏览器时
+// 可测试。UI 函数位于下方并调用这些函数。
 
 function schedEntryKindLabel(kind) {
   return kind === 'queue' ? 'queue' : 'task';
 }
 
 // `task-<任务名>` entry ids must stay unique and control-character free. Task
-// names may contain Chinese (keep them), but never path separators. Split/join
-// instead of one quoted regex keeps this function extractable by ui_pure_test.js.
+// 名称可含中文（保留），但不含路径分隔符。用 split/join
+// 替代带引号正则，便于 ui_pure_test.js 提取该函数。
 function schedSanitizeIdSegment(name) {
   let s = String(name == null ? '' : name).trim();
   s = s.replace(/[\u0000-\u001f\u007f]/g, '-');
@@ -2914,8 +2914,8 @@ function schedSanitizeIdSegment(name) {
   return s || 'entry';
 }
 
-// Task-name/queue-id grammar shared by the UI validators: no separators, no
-// control characters (the backend additionally checks Windows reserved names).
+// UI 校验共用的任务名/队列 id 语法：无分隔符、无
+// 控制字符（后端还会检查 Windows 保留名）。
 function schedHasUnsafeNameChar(value) {
   const s = String(value == null ? '' : value);
   for (const c of s) {
@@ -2947,8 +2947,8 @@ function schedEmptyConfig() {
   return {
     schema_version: 4,
     config: {
-      // P2-2: a newly created scheduler.json must actually keep scheduling, like
-      // the shipped dist/stage default (`start-scheduler.bat` passes no --mode).
+      // P2-2：新建的 scheduler.json 必须真正保持调度，如同
+      // 随包 dist/stage 默认值（`start-scheduler.bat` 不传 --mode）。
       // mode=stop would run a single pass and exit, which looks like "调度没生效".
       mode: 'loop',
       loop_interval_s: 60,
@@ -2963,10 +2963,10 @@ function schedEmptyConfig() {
   };
 }
 
-// Normalize whatever GET /scheduler/config returned into the v4 document the UI
-// edits: schema 4, entries[].kind defaulted, arrays/objects guaranteed. Unknown
-// keys are preserved here; the backend also writes a submitted v4 document back
-// verbatim, so they survive a save (only a v3 document is re-normalized/upgraded).
+// 将 GET /scheduler/config 返回内容归一为 UI 编辑的 v4 文档：
+// schema 4、entries[].kind 带默认值、数组/对象保证存在。未知
+// 键在此保留；后端也会将提交的 v4 文档
+// 原样写回，因此保存后仍存在（仅 v3 文档会被重新归一/升级）。
 function schedNormalizeConfig(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return schedEmptyConfig();
   const base = schedEmptyConfig();
@@ -2992,8 +2992,8 @@ function schedNormalizeConfig(raw) {
   return out;
 }
 
-// New-entry defaults required by the P3 spec: kind=task, enabled, periodic,
-// full-day windows (empty array = always in window), quota day/1, config defaults.
+// P3 规范要求的新条目默认值：kind=task、enabled、periodic、
+// 全天窗口（空数组=始终在窗口内）、quota day/1、配置默认值。
 function schedDefaultTaskEntry(task, config, kind) {
   const cfg = config || schedEmptyConfig();
   const k = schedEntryKindLabel(kind || 'task');
@@ -3024,12 +3024,12 @@ function schedWindowsToText(windows) {
   }).join(', ');
 }
 
-// Simplified windows text: `HH:MM-HH:MM`, comma separated, optional `[1,3]`
+// 简化窗口文本：`HH:MM-HH:MM`，逗号分隔，可选 `[1,3]`
 // weekday prefix per window. Empty (or 全天) = no window restriction.
 function schedParseWindowsText(text) {
   const raw = String(text == null ? '' : text).trim();
   if (!raw || raw === '全天' || raw === '全天候') return { ok: true, windows: [], error: '' };
-  // Commas inside `[1,3]` separate weekdays, not windows: mask them first.
+  // `[1,3]` 内逗号分隔星期而非窗口：先屏蔽它们。
   const guarded = raw.replace(/\[([^\]]*)\]/g, (m, inner) => '[' + inner.replace(/[,，]/g, ' ') + ']');
   const parts = guarded.split(/[,，;；\n]+/).map((s) => s.trim()).filter(Boolean);
   const windows = [];
@@ -3147,8 +3147,8 @@ function schedEntryToForm(entry, defaults) {
   };
 }
 
-// Build one entry from form values. `base` supplies editable entry_id/unknown
-// keys; temp forces windows=[] and quota=null (the backend rejects both).
+// 由表单值构建一个条目。`base` 提供可编辑的 entry_id/未知
+// 键；temp 强制 windows=[] 且 quota=null（后端会拒绝两者）。
 function schedBuildEntryFromForm(form, base, config) {
   const f = form || {};
   const b = base || {};
@@ -3212,7 +3212,7 @@ function schedFindTaskQueueMember(config, task) {
   return '';
 }
 
-// Rule 2: one queue has at most one trigger entry.
+// 规则 2：一个队列最多一个触发条目。
 function schedQueueEntryConflict(config, queueId, exceptEntryId) {
   const qid = String(queueId == null ? '' : queueId);
   const except = String(exceptEntryId == null ? '' : exceptEntryId);
@@ -3406,8 +3406,8 @@ function schedUpsertQueue(config, queue) {
   return cfg;
 }
 
-// Removing a queue also removes every queue entry pointing at it (otherwise the
-// remaining entry would reference an unknown queue and fail validation).
+// 删除队列时同时删除所有指向它的队列条目（否则
+// 剩余条目会引用未知队列而校验失败）。
 function schedRemoveQueue(config, queueId) {
   const cfg = schedNormalizeConfig(config);
   const removed = cfg.entries
@@ -3475,16 +3475,16 @@ function schedQuotaSummary(status) {
   return `quota：${limited.length} 条限制 · 本周期已用 ${used}/${times}`;
 }
 
-// P1-3: /scheduler/status failures need a stable, testable sentence. The status
-// card renders every value as `—` for an unknown state, never the normal values.
+// P1-3：/scheduler/status 失败需要稳定可测的语句。状态
+// 卡在未知状态下所有值显示 `—`，绝不显示正常值。
 function schedStatusErrorText(err) {
   const detail = String(err == null ? '' : err).trim();
   return '调度器状态读取失败：' + (detail || '未知错误');
 }
 
-// P1-4: canonical JSON (object keys sorted, array order kept) so comparing the
-// loaded snapshot with a fresh GET is insensitive to key order but sensitive to
-// any value change.
+// P1-4：规范化 JSON（对象键排序、数组顺序保留），使比较
+// 已加载快照与最新 GET 时不受键顺序影响，但对
+// 任何值变化敏感。
 function schedCanonicalJson(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return '[' + value.map(schedCanonicalJson).join(',') + ']';
@@ -3492,8 +3492,8 @@ function schedCanonicalJson(value) {
     JSON.stringify(k) + ':' + schedCanonicalJson(value[k])).join(',') + '}';
 }
 
-// Snapshot of the raw GET /scheduler/config document (`''` when the file does not
-// exist yet). loadScheduleConfig stores it as `scheduleConfigBase`.
+// 原始 GET /scheduler/config 文档快照（文件不存在时为 `''`；
+// loadScheduleConfig 将其存为 `scheduleConfigBase`）。
 function schedConfigSnapshotText(config) {
   if (config == null) return '';
   return schedCanonicalJson(config);
@@ -3549,12 +3549,12 @@ function schedParseConfigJson(text) {
 }
 
 // --- P4: 调度运行记录（/runs/scheduler）纯函数 -------------------------------
-// Contract (P4A): GET /runs/scheduler?limit=200&task=&outcome= returns
+// 契约（P4A）：GET /runs/scheduler?limit=200&task=&outcome= 返回
 // {ok, dir, count, runs:[{run_id,file,task,kind,entry_id,queue_id,round,
-//  member_index,attempt,started_ms,finished_ms,duration_ms,class,outcome,exit,
-//  exit_code,clicks,error}]} newest→oldest; GET /runs/scheduler/run?run_id=
-// returns one full run. Legacy GET /runs (clicks JSONL) is untouched.
-// Keep every helper self-contained: ui_pure_test extracts functions one by one.
+// member_index,attempt,started_ms,finished_ms,duration_ms,class,outcome,exit,
+// exit_code,clicks,error}]} 新→旧；GET /runs/scheduler/run?run_id=
+// 返回单次完整运行。旧 GET /runs（clicks JSONL）不变。
+// 保持每个 helper 自包含：ui_pure_test 会逐个提取函数。
 function schedRunValueText(value) {
   if (value === undefined || value === null || value === '') return '—';
   if (typeof value === 'string') return value;
@@ -3574,10 +3574,10 @@ function schedRunLimitValue(value) {
 }
 
 function schedRunsBuildQuery(opts) {
-  // P4A filters on the persisted `outcome` (Done/Failed/Exhausted/error). The
-  // plan's class words (success/resource/blocked/retryable/fatal) live in the
-  // separate `class` field, which the list endpoint cannot filter; those are
-  // applied locally by schedRunsFilterLocal so both spellings work.
+  // P4A 按持久化 `outcome` 过滤（Done/Failed/Exhausted/error）。
+  // 计划的 class 词（success/resource/blocked/retryable/fatal）位于
+  // 独立 `class` 字段，列表接口无法过滤；这些
+  // 由 schedRunsFilterLocal 本地应用，使两种写法都生效。
   const classOutcomes = ['success', 'resource', 'blocked', 'retryable', 'fatal'];
   const persistedOutcomes = ['Done', 'Failed', 'Exhausted', 'error'];
   const o = opts || {};
@@ -3670,8 +3670,8 @@ function schedRunOutcomeBadgeClass(outcome) {
   return 'kind';
 }
 
-// Colour by the failure class first (success/resource/blocked/retryable/fatal),
-// then by the persisted outcome (Done/Failed/Exhausted/error) for older files.
+// 优先按失败类别着色（success/resource/blocked/retryable/fatal），
+// 旧文件再按持久化 outcome（Done/Failed/Exhausted/error）着色。
 function schedRunStatusBadgeClass(run) {
   const r = run || {};
   const byClass = schedRunOutcomeBadgeClass(r.class);
@@ -3940,8 +3940,8 @@ function schedRunsFilterLocal(runs, opts) {
     if (!run) return false;
     if (task && String(run.task == null ? '' : run.task) !== task) return false;
     if (outcome) {
-      // Match the persisted outcome (Done/Failed/...) or the result class
-      // (success/resource/...); the two live in separate run fields.
+      // 匹配持久化 outcome（Done/Failed/...）或结果类别
+      // （success/resource/...）；两者位于独立 run 字段。
       const runOutcome = String(run.outcome == null ? '' : run.outcome).trim().toLowerCase();
       const runClass = String(run.class == null ? '' : run.class).trim().toLowerCase();
       if (runOutcome !== outcome && runClass !== outcome) return false;
@@ -4000,8 +4000,8 @@ function setScheduleBusy(busy) {
     return false;
   }
 
-// One raw GET /scheduler/config. Never mutates page state: page loading and the
-// P1-4 pre-save check decide separately how a failure is surfaced.
+// 一次原始 GET /scheduler/config。绝不修改页面状态：页面加载与
+// P1-4 保存前检查分别决定如何呈现失败。
   async function fetchScheduleConfigOnce() {
     try {
       const body = await runnerFetchJson(RUNNER_API.schedulerConfig);
@@ -4035,8 +4035,8 @@ async function loadScheduleConfig(force) {
   scheduleConfigError = '';
   scheduleConfigMeta = res.body;
   scheduleConfig = schedNormalizeConfig(res.body.config);
-  // P1-4: remember what this page state is based on, so a later save can refuse
-  // to overwrite a file that changed in the meantime.
+  // P1-4：记录本页面状态所基于的快照，后续保存可拒绝
+  // 覆盖期间已变化的文件。
   scheduleConfigBase = schedConfigSnapshotText(res.body.config);
   if (!res.body.config) {
     schedLog('调度配置文件不存在（' + (res.body.path || 'scheduler.json') + '）；保存后会创建', 'WARN');
@@ -4074,8 +4074,8 @@ async function loadScheduleConfig(force) {
     }
   }
 
-  // 400/409 bodies carry `errors[]`; show the summary plus every server line so
-  // per-field validation failures stay readable (P3 contract: errors line by line).
+  // 400/409 响应体带 `errors[]`；展示摘要与全部服务端行，
+  // 使字段级校验失败可读（P3 契约：错误逐行）。
   function schedConfigSaveErrorText(res) {
     const result = res || {};
     const base = schedResponseErrorText(result.status, result.body);
@@ -4379,13 +4379,13 @@ function scrollScheduleRunsIntoView() {
   try {
     pageSchedRunsList.scrollIntoView({ block: 'start', behavior: 'smooth' });
   } catch (e) {
-    /* ignore: scrolling is cosmetic */
+    /* 忽略：滚动仅为视觉效果 */
   }
 }
 
-// Task-library shortcut: open the schedule page with the run list filtered to
-// this task. The filter survives the page refresh because refreshSchedulePage
-// reads `scheduleRunsFilter` instead of resetting it.
+// 任务库快捷入口：打开调度页并将运行列表过滤到
+// 该任务。刷新后过滤仍保留，因为 refreshSchedulePage
+// 读取 `scheduleRunsFilter` 而非重置。
   function showScheduleRunsForTask(task) {
     const name = String(task == null ? '' : task).trim();
     scheduleRunsFilter.task = name;
@@ -4401,9 +4401,9 @@ function scrollScheduleRunsIntoView() {
     refreshCurrentPage().then(function () { scrollScheduleRunsIntoView(); });
   }
 
-// Entry-row shortcut: task entries filter server-side by task; queue entries
-// filter their members' runs locally by queue_id (the list endpoint has no
-// queue filter parameter in the P4A contract).
+// 条目行快捷入口：任务条目按任务服务端过滤；队列条目
+// 按 queue_id 本地过滤成员的运行（列表接口没有
+// P4A 契约中的队列过滤参数）。
   function showScheduleRunsForEntry(entry) {
     const e = entry || {};
     const isQueue = String(e.kind == null ? '' : e.kind) === 'queue';
@@ -4528,9 +4528,9 @@ function scrollScheduleRunsIntoView() {
     pageSchedRunsList.appendChild(wrap);
   }
 
-// List read. Always resolves (never rejects): the runs section is a soft
-// dependency of the schedule page, and its failure is shown verbatim + logged
-// as WARN instead of being swallowed.
+// 列表读取。始终 resolve（不 reject）：运行区是调度页的
+// 软依赖，失败时原样展示并记录
+// WARN，而不是被吞掉。
   async function refreshScheduleRuns() {
     if (!pageSchedRunsList) return { ok: false, error: '运行记录区不可用' };
     if (scheduleRunsLoading) return { ok: false, error: '运行记录读取中' };
@@ -4560,7 +4560,7 @@ function scrollScheduleRunsIntoView() {
     }
   }
 
-// Single-run read for the detail dialog (GET /runs/scheduler/run?run_id=).
+// 详情对话框的单次运行读取（GET /runs/scheduler/run?run_id=）。
   async function fetchScheduleRunOnce(runId) {
     try {
       const body = await runnerFetchJson(schedRunDetailUrl(runId));
@@ -5176,10 +5176,10 @@ async function saveSchedulePageConfig() {
     if (pageSchedConfigStatus) pageSchedConfigStatus.textContent = msg;
     return;
   }
-  // P1-4: GET first. The toolbar save must not POST the cached document over an
-  // edit made outside this page (hand edit / another tab / a script). Compare the
-  // current file with the snapshot this page was loaded from; a mismatch aborts
-  // the save and asks for a reload.
+  // P1-4：先 GET。工具栏保存不得用缓存文档覆盖
+  // 本页之外的编辑（手工编辑/其他标签页/脚本）。比较
+  // 当前文件与本页加载快照；不一致则中止
+  // 保存并要求重载。
   const freshRes = await fetchScheduleConfigOnce();
   if (!freshRes.ok) {
     const msg = '保存配置失败：' + freshRes.error;
@@ -5256,7 +5256,7 @@ async function saveSchedulePageConfig() {
   }
 
 // --- 旧 Studio 工作台面板 + 重置记忆 ----------------------------------------
-// WORKBENCH PANEL + RESET MEMORY: fmtLocal / schedBadge / renderScheduler / refreshScheduler / resetTaskChecks / openResetMemoryDialog / populateResetTaskList / submitResetMemory
+// 工作台面板 + 重置记忆：fmtLocal / schedBadge / renderScheduler / refreshScheduler / resetTaskChecks / openResetMemoryDialog / populateResetTaskList / submitResetMemory
 // =====================================================================
 // --- M2/N37: 调度面板 + 重置记忆 -------------------------------------------
 function fmtLocal(ms) {
@@ -5497,9 +5497,9 @@ function resetTaskChecks(mode) {
     if (el.schedRefresh) el.schedRefresh.disabled = schedBusy;
   }
 
-  // While a stop is pending (backend `timeout:true`, long attempt finishing),
+  // 停止请求挂起时（后端 `timeout:true`，长尝试正在收尾），
   // keep "启动调度" disabled until the status poll observes running=false; the
-  // stop button stays clickable (a repeated stop is a harmless no-op).
+  // 停止按钮保持可点（重复停止是无害空操作）。
   function setSchedStopping(stopping) {
     schedStopping = !!stopping;
     if (el.schedStart) el.schedStart.disabled = schedBusy || schedStopping;
@@ -5568,8 +5568,8 @@ function resetTaskChecks(mode) {
 
   async function loadQueuePage() {
     const errors = [];
-    // Tasks first: the entry/queue dialogs and the reset-memory list use
-    // /runner/tasks (the only task source on the usage surface).
+    // 先取任务：条目/队列对话框与重置记忆列表使用
+    // /runner/tasks（使用端唯一任务来源）。
     try {
       state.tasks = await runnerFetchJson(RUNNER_API.tasks);
       const list = Array.isArray(state.tasks.tasks) ? state.tasks.tasks : [];
@@ -5597,9 +5597,9 @@ function resetTaskChecks(mode) {
     return false;
   }
 
-  // The 5s poll only overlays runtime values. Config-derived cards are rebuilt
-  // by refreshSchedulePage(); here only the runtime badge hosts are updated, so
-  // the user never loses an in-progress edit or button focus.
+  // 5 秒轮询只叠加运行时值。配置派生卡片由
+  // refreshSchedulePage() 重建；这里只更新运行时角标宿主，
+  // 用户不会丢失进行中的编辑或按钮焦点。
   async function pollQueueRuntimeOnce() {
     if (state.busy || scheduleBusy || schedBusy || scheduleAnyDialogOpen()) return;
     await loadRunnerSchedulerStatus();
@@ -5622,8 +5622,8 @@ function resetTaskChecks(mode) {
     }
   }
 
-  // Refresh every scheduling surface after start/stop/save: the header badge,
-  // the overview card, GET /runner/scheduler/status and GET /scheduler/status.
+  // 启动/停止/保存后刷新所有调度表面：顶部角标、
+  // 概览卡片、GET /runner/scheduler/status 与 GET /scheduler/status。
   async function refreshSchedulerSurfaces() {
     await refreshHealth();
     await loadRunnerSchedulerStatus();
@@ -5700,8 +5700,8 @@ function resetTaskChecks(mode) {
     }
   }
 
-  // While the backend answered `timeout:true` (a long attempt is finishing), the
-  // UI polls `GET /runner/scheduler/status` until running=false (≤30 s) and only
+  // 后端返回 `timeout:true`（长尝试正在收尾）期间，
+  // UI 轮询 `GET /runner/scheduler/status` 直到 running=false（≤30 秒），
   // then reports "调度已停止"; a timeout is never rendered as a failure.
   function stopStopPolling() {
     if (stopPollTimer !== null) {
@@ -5718,8 +5718,8 @@ function resetTaskChecks(mode) {
   async function pollStopOnce() {
     stopPollTimer = null;
     if (Date.now() - stopPollStartedMs > RUNNER_STOP_POLL_MAX_MS) {
-      // Give the user the controls back after the budget: the scheduler may
-      // still be finishing, but the UI must not stay locked forever.
+      // 预算结束后把控制权交还用户：调度可能
+      // 仍在收尾，但 UI 不能永久锁死。
       setSchedStopping(false);
       if (el.schedStatus) {
         el.schedStatus.textContent = '仍在停止：当前任务可能还在执行（可稍后刷新）';
@@ -5969,8 +5969,8 @@ function resetTaskChecks(mode) {
     }
   }
 
-  // Queue page polling: refresh the scheduling status every 5s while the page is
-  // visible; leaving the page stops the timer.
+  // 队列页轮询：页面可见时每 5 秒刷新调度状态，
+  // 离开页面即停止计时器。
   function stopQueuePolling() {
     if (queuePollTimer !== null) {
       clearInterval(queuePollTimer);
@@ -6161,14 +6161,14 @@ function resetTaskChecks(mode) {
       button.classList.toggle('active', button.getAttribute('data-page') === page);
     }
     document.title = 'OAS Runner（使用端）· ' + (RUNNER_PAGE_LABELS[page] || '概览');
-    // Deep-link friendly for a future Android WebView; history may be
-    // unavailable on file/embedded contexts, so this must stay best-effort.
+    // 便于未来 Android WebView 深链；history 在 file/嵌入式环境
+    // 可能不可用，因此必须保持 best-effort。
     try {
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, '', '#' + page);
       }
     } catch (e) {
-      /* ignore: hash sync is cosmetic */
+      /* 忽略：hash 同步仅为视觉效果 */
     }
   }
 
@@ -6192,7 +6192,7 @@ function resetTaskChecks(mode) {
     try {
       const healthError = await refreshHealth();
       if (healthError) errors.push(healthError);
-      // P0-1a: the notification badge must stay fresh on every page; the card
+      // P0-1a：通知角标需在每个页面保持最新；卡片
       // itself lives on 安装包, so its read error only pollutes that page.
       const updatesError = await loadRunnerUpdates();
       if (state.page === 'packages' && updatesError) errors.push(updatesError);
@@ -6219,7 +6219,7 @@ function resetTaskChecks(mode) {
   }
 
   function bindEvents() {
-    // PR7: legacy Studio scheduler bindings (page / dialogs / run filters).
+    // PR7：旧 Studio 调度绑定（页面/对话框/运行过滤）。
     if (btnSchedRefresh) btnSchedRefresh.addEventListener('click', function () { refreshScheduler(); });
     if (btnSchedReset) btnSchedReset.addEventListener('click', openResetMemoryDialog);
     if (btnSchedOpenPage) {
@@ -6385,8 +6385,8 @@ function resetTaskChecks(mode) {
     showPage(pageFromHash() || 'overview');
     setPageStatus('连接中…');
     refreshCurrentPage();
-    // P0-1a: poll Studio publish notifications only while the Runner UI is
-    // visible; a hidden tab stops the timer (no background polling thread).
+    // P0-1a：仅在 Runner UI 可见时轮询 Studio 发布通知；
+    // 隐藏标签页停止计时器（无后台轮询线程）。
     startUpdatesPolling();
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'hidden') {

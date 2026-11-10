@@ -1,16 +1,15 @@
-﻿# oasd-runner ??the thin Runner application (Phase 1a of the Runner/Studio split).
+# oasd-runner —— Runner/Studio 分离的轻薄 Runner 应用（Phase 1a）。
 #
-# The whole Runner capability (HTTP surface, embedded scheduler, package
-# install, runner config, ?? lives in the `oasd` engine *library*. This package
-# only ships the binary, so the Runner can be built from this repository alone.
+# 全部 Runner 能力（HTTP 接口、内嵌调度、包安装、Runner 配置等）都在
+# `oasd` 引擎*库*中。本包只提供二进制，因此仅靠本仓即可构建 Runner。
 #
-# Phase 1b (current): `oasd` is pinned to an oas-core **git commit** (no tag is
-# cut yet; the commit hash is the source of truth). Bump `rev` deliberately
-# after an oas-core change, rebuild and commit the updated Cargo.lock.
+# Phase 1b（当前）：`oasd` 固定到 oas-core 的 **git 提交**（尚未打 tag；
+# 提交哈希即事实来源）。oas-core 变更后需有意 bump `rev`，重新构建并提交
+# 更新后的 Cargo.lock。
 #
-# 9e85249 = oas-core seq202 (revert drag-start clamp; user config issue)
-# which adds `oasd::cli::run_as_with_args`, which the
-# Runner app uses to inject its own default `--ui ui` (see src/main.rs).
+# 9e85249 = oas-core seq202（回退 drag 起点 clamp；用户配置问题），
+# 其中新增 `oasd::cli::run_as_with_args`，Runner 应用用它注入自己的
+# 默认 `--ui ui`（见 src/main.rs）。
 [package]
 name = "oasd-runner"
 version = "0.2.0"

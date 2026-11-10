@@ -988,7 +988,7 @@ main.runner-main {
     padding: 4px 8px;
   }
 
-  /* Decorative (not data) on very narrow screens; the top refresh stays. */
+  /* 窄屏下仅为装饰（非数据）；顶部刷新按钮保留。 */
   #runner-last-refresh,
   #runner-nav > .spacer,
   #runner-nav > .muted {
