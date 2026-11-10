@@ -13,7 +13,7 @@
 oasd = { git = "https://github.com/passioki/oas-core", rev = "<oas-core commit>", features = ["ocr"] }
 ```
 
-- 当前 rev：**`c0729f1796dc3d89625d12324e55c9477545b3d9`**（oas-core seq197 包隔离提交；新增
+- 当前 rev：**`2f9f3642731a9a93685d45c680337f52509563cd`**（oas-core seq198 Runner 配置修复提交；新增
   `oasd::cli::run_as_with_args`，本仓用它注入默认 `--ui ui`）。
 - 升级流程（刻意显式，避免两仓漂移）：
   1. oas-core 有 Runner 相关改动 → 合并/推送到 oas-core `dev`；
