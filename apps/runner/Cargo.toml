@@ -7,7 +7,7 @@
 # 提交哈希即事实来源）。oas-core 变更后需有意 bump `rev`，重新构建并提交
 # 更新后的 Cargo.lock。
 #
-# b4affb9 = oas-core seq231 (compiled inline; logs; drawer)
+# seq235 variable ids
 # 其中新增 `oasd::cli::run_as_with_args`，Runner 应用用它注入自己的
 # 默认 `--ui ui`（见 src/main.rs）。
 [package]
@@ -22,4 +22,4 @@ name = "oasd-runner"
 path = "src/main.rs"
 
 [dependencies]
-oasd = { git = "https://github.com/passioki/oas-core", rev = "b4affb9e4fba0e7babfb884261dd0bf82c0f6f04", features = ["ocr"] }
+oasd = { git = "https://github.com/passioki/oas-core", rev = "4d777945e8eba36d6821b83fb519c54fc03e3c35", features = ["ocr"] }
