@@ -7,7 +7,7 @@
 # 提交哈希即事实来源）。oas-core 变更后需有意 bump `rev`，重新构建并提交
 # 更新后的 Cargo.lock。
 #
-# d4e0fd5 = oas-core seq228 (ids/names; inline packages; logs)
+# b4affb9 = oas-core seq231 (compiled inline; logs; drawer)
 # 其中新增 `oasd::cli::run_as_with_args`，Runner 应用用它注入自己的
 # 默认 `--ui ui`（见 src/main.rs）。
 [package]
