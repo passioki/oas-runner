@@ -27,11 +27,11 @@
                        "package_url":  ""
                    },
                    {
-                       "event_id":  "pkg-鍏抽棴寮圭獥-1-20611846a9e9",
-                       "task_id":  "鍏抽棴寮圭獥",
+                       "event_id":  "pkg-关闭弹窗-1-20611846a9e9",
+                       "task_id":  "关闭弹窗",
                        "task_version":  1,
-                       "package_id":  "pkg-鍏抽棴寮圭獥-1-20611846a9e9",
-                       "package_file":  "鍏抽棴寮圭獥-v1.oaspkg",
+                       "package_id":  "pkg-关闭弹窗-1-20611846a9e9",
+                       "package_file":  "关闭弹窗-v1.oaspkg",
                        "sha256":  "743057D9BFC9CD69CCA5A7DDBCFE245675E02F71B02441FA956BE3BF2D00F5B5",
                        "size_bytes":  1868,
                        "published_at_ms":  1793877951171,
