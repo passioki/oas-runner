@@ -1,19 +1,19 @@
 {
     "schema_version":  1,
-    "generated_at_ms":  1794514062655,
+    "generated_at_ms":  1794545580212,
     "runner":  {
                    "android":  {
-                                   "versionCode":  16,
-                                   "versionName":  "0.16.0",
-                                   "apk_file":  "oas-runner-0.16.0.apk",
-                                   "apk_url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.16.0/oas-runner-0.16.0.apk",
-                                   "sha256":  "a526ded095e15c0f42f1f35c1db25ba605490e5ea18b92c64e0f2e3a39b4f08a",
-                                   "size_bytes":  48003928
+                                   "versionCode":  17,
+                                   "versionName":  "0.17.0",
+                                   "apk_file":  "oas-runner-0.17.0.apk",
+                                   "apk_url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.17.0/oas-runner-0.17.0.apk",
+                                   "sha256":  "c70bd11368506aca9136e5286bdbbc2e1867ff5310027049ebc97965e941cc07",
+                                   "size_bytes":  48003900
                                }
                },
     "ui":  {
                "file":  "ui.zip",
-               "url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.16.0/ui.zip",
+               "url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.17.0/ui.zip",
                "sha256":  "b83a8ba6448137deda8640952ce85dc0ad9a1dba8bdfd314a4cde7f1663999ba",
                "size_bytes":  690224
            }
