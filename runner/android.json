@@ -1,20 +1,20 @@
 {
     "schema_version":  1,
-    "generated_at_ms":  1794581761965,
+    "generated_at_ms":  1794589891940,
     "runner":  {
                    "android":  {
-                                   "versionCode":  19002,
-                                   "versionName":  "0.19.2",
-                                   "apk_file":  "oas-runner-0.19.2.apk",
-                                   "apk_url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.19.2/oas-runner-0.19.2.apk",
-                                   "sha256":  "6ca42aadd828f17631dfc46565404883e429f1e9c84271047737f81de000b49e",
-                                   "size_bytes":  48135696
+                                   "versionCode":  19003,
+                                   "versionName":  "0.19.3",
+                                   "apk_file":  "oas-runner-0.19.3.apk",
+                                   "apk_url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.19.3/oas-runner-0.19.3.apk",
+                                   "sha256":  "1f2c883484791ffed56c9757f2476129357046b36db89f3a6393bcc2bb5325a0",
+                                   "size_bytes":  48137080
                                }
                },
     "ui":  {
                "file":  "ui.zip",
-               "url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.19.2/ui.zip",
-               "sha256":  "d953443cf9347b3424bdf94eb6458ce23d30c26061d1f836a3f38ddaa69d7af8",
-               "size_bytes":  694197
+               "url":  "https://github.com/passioki/oas-runner/releases/download/runner-v0.19.3/ui.zip",
+               "sha256":  "a6a2ff92a7a46461ddd208d8e6aae9b66d61b4ec7245fc42ae695baba2660b91",
+               "size_bytes":  695579
            }
 }
