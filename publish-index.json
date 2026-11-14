@@ -9,22 +9,5 @@
     "version": "0.1.0",
     "dirty": false
   },
-  "events": [
-    {
-      "event_id": "pkg-关闭弹窗-1-20611846a9e9",
-      "task_id": "关闭弹窗",
-      "task_version": 1,
-      "package_id": "pkg-关闭弹窗-1-20611846a9e9",
-      "package_file": "关闭弹窗-v1.oaspkg",
-      "sha256": "743057D9BFC9CD69CCA5A7DDBCFE245675E02F71B02441FA956BE3BF2D00F5B5",
-      "size_bytes": 1868,
-      "published_at_ms": 1793877951171,
-      "source": {
-        "repo": "D:/OAS-dev/oas-core",
-        "commit": "bb2d4ea"
-      },
-      "min_engine": "0.1.0",
-      "package_url": ""
-    }
-  ]
+  "events": []
 }
