@@ -1,13 +1,29 @@
 {
   "schema_version": 1,
-  "updated_at_ms": 1793877961649,
-  "seq": 2,
+  "updated_at_ms": 1794645718515,
+  "seq": 1,
   "publisher": {
-    "surface": "feed",
-    "repo": "https://github.com/passioki/oas-core.git",
-    "commit": "bb2d4ea",
-    "version": "0.1.0",
+    "surface": "studio",
+    "repo": "",
+    "commit": "",
+    "version": "0.2.0",
     "dirty": false
   },
-  "events": []
+  "events": [
+    {
+      "event_id": "pkg-返回庭院-1-bd16e1142e01",
+      "task_id": "返回庭院",
+      "task_version": 1,
+      "package_id": "pkg-返回庭院-1-bd16e1142e01",
+      "package_file": "incoming/返回庭院-v1.oaspkg",
+      "sha256": "7e227e46afce031700fcfbe6b8a4e96bc9608874bd4c2ef48f70ab12e3c33d47",
+      "size_bytes": 247677,
+      "published_at_ms": 1794645718515,
+      "source": {
+        "repo": "",
+        "commit": ""
+      },
+      "min_engine": "0.2.0"
+    }
+  ]
 }
