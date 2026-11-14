@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at_ms": 1794645718515,
-  "seq": 1,
+  "updated_at_ms": 1794651036136,
+  "seq": 2,
   "publisher": {
     "surface": "studio",
     "repo": "",
@@ -19,6 +19,22 @@
       "sha256": "7e227e46afce031700fcfbe6b8a4e96bc9608874bd4c2ef48f70ab12e3c33d47",
       "size_bytes": 247677,
       "published_at_ms": 1794645718515,
+      "source": {
+        "repo": "",
+        "commit": ""
+      },
+      "min_engine": "0.2.0"
+    },
+    {
+      "event_id": "pkg-返回庭院-1-047dd2eabf7e",
+      "task_id": "返回庭院",
+      "task_name": "返回庭院",
+      "task_version": 1,
+      "package_id": "pkg-返回庭院-1-047dd2eabf7e",
+      "package_file": "incoming/返回庭院-v1.oaspkg",
+      "sha256": "6c6ec3db75eaf7e08edd01349f41a863fe7f50e0e73871640651a22b7400840b",
+      "size_bytes": 193136,
+      "published_at_ms": 1794651036136,
       "source": {
         "repo": "",
         "commit": ""
