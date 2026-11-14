@@ -1,46 +1,30 @@
 {
-    "schema_version":  1,
-    "updated_at_ms":  1793877961649,
-    "seq":  2,
-    "publisher":  {
-                      "surface":  "feed",
-                      "repo":  "https://github.com/passioki/oas-core.git",
-                      "commit":  "bb2d4ea",
-                      "version":  "0.1.0",
-                      "dirty":  false
-                  },
-    "events":  [
-                   {
-                       "event_id":  "pkg-child_ascii-1-0728eed913c0",
-                       "task_id":  "child_ascii",
-                       "task_version":  1,
-                       "package_id":  "pkg-child_ascii-1-0728eed913c0",
-                       "package_file":  "child_ascii-v1.oaspkg",
-                       "sha256":  "359E45BF57CD6D90E7D240721E8AD4505AA4808F8FBCD3195C3664ECFE65B788",
-                       "size_bytes":  1424,
-                       "published_at_ms":  1793802324819,
-                       "source":  {
-                                      "repo":  "D:/OAS-dev/oas-core",
-                                      "commit":  "442f5cb"
-                                  },
-                       "min_engine":  "0.1.0",
-                       "package_url":  ""
-                   },
-                   {
-                       "event_id":  "pkg-关闭弹窗-1-20611846a9e9",
-                       "task_id":  "关闭弹窗",
-                       "task_version":  1,
-                       "package_id":  "pkg-关闭弹窗-1-20611846a9e9",
-                       "package_file":  "关闭弹窗-v1.oaspkg",
-                       "sha256":  "743057D9BFC9CD69CCA5A7DDBCFE245675E02F71B02441FA956BE3BF2D00F5B5",
-                       "size_bytes":  1868,
-                       "published_at_ms":  1793877951171,
-                       "source":  {
-                                      "repo":  "D:/OAS-dev/oas-core",
-                                      "commit":  "bb2d4ea"
-                                  },
-                       "min_engine":  "0.1.0",
-                       "package_url":  ""
-                   }
-               ]
+  "schema_version": 1,
+  "updated_at_ms": 1793877961649,
+  "seq": 2,
+  "publisher": {
+    "surface": "feed",
+    "repo": "https://github.com/passioki/oas-core.git",
+    "commit": "bb2d4ea",
+    "version": "0.1.0",
+    "dirty": false
+  },
+  "events": [
+    {
+      "event_id": "pkg-关闭弹窗-1-20611846a9e9",
+      "task_id": "关闭弹窗",
+      "task_version": 1,
+      "package_id": "pkg-关闭弹窗-1-20611846a9e9",
+      "package_file": "关闭弹窗-v1.oaspkg",
+      "sha256": "743057D9BFC9CD69CCA5A7DDBCFE245675E02F71B02441FA956BE3BF2D00F5B5",
+      "size_bytes": 1868,
+      "published_at_ms": 1793877951171,
+      "source": {
+        "repo": "D:/OAS-dev/oas-core",
+        "commit": "bb2d4ea"
+      },
+      "min_engine": "0.1.0",
+      "package_url": ""
+    }
+  ]
 }
