@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "updated_at_ms": 1794651036136,
-  "seq": 3,
+  "updated_at_ms": 1795757995458,
+  "seq": 4,
   "publisher": {
     "surface": "studio",
-    "repo": "",
-    "commit": "",
+    "repo": "D:/test/workspace",
+    "commit": "69201c7",
     "version": "0.2.0",
-    "dirty": false
+    "dirty": true
   },
   "events": [
     {
@@ -25,6 +25,48 @@
         "commit": ""
       },
       "min_engine": "0.2.0"
+    },
+    {
+      "event_id": "pkg-单刷困二八-1-6470a9953336",
+      "task_id": "单刷困二八",
+      "task_name": "单刷困二八",
+      "kind": "task",
+      "task_version": 1,
+      "package_id": "pkg-单刷困二八-1-6470a9953336",
+      "package_file": "incoming/单刷困二八-v1.oaspkg",
+      "sha256": "15cd01dc2c2a1d8ca606519a1d109484e092125352eec5726281a8adaff16bc1",
+      "size_bytes": 339294,
+      "published_at_ms": 1795756510742,
+      "source": {
+        "repo": "D:/test/workspace",
+        "commit": "69201c7"
+      },
+      "min_engine": "0.2.0",
+      "flow_ops": [
+        "drag.asset",
+        "with_params"
+      ]
+    },
+    {
+      "event_id": "pkg-个人突破-1-dc7e15784e54",
+      "task_id": "个人突破",
+      "task_name": "个人突破",
+      "kind": "task",
+      "task_version": 1,
+      "package_id": "pkg-个人突破-1-dc7e15784e54",
+      "package_file": "incoming/个人突破-v1.oaspkg",
+      "sha256": "2a83b92bb9a4cae4dd0feb05657048842803753bb4eee0a89512993300b0123e",
+      "size_bytes": 340349,
+      "published_at_ms": 1795757146968,
+      "source": {
+        "repo": "D:/test/workspace",
+        "commit": "69201c7"
+      },
+      "min_engine": "0.2.0",
+      "flow_ops": [
+        "drag.asset",
+        "with_params"
+      ]
     }
   ]
 }
